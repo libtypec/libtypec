@@ -6,7 +6,7 @@ default_options : [
 conf_data = configuration_data()
 conf_data.set('libtypec_utils_VERSION_MAJOR', '0')
 conf_data.set('libtypec_utils_VERSION_MINOR', '5')
-conf_data.set('libtypec_utils_VERSION_PATCH', '0')
+conf_data.set('libtypec_utils_VERSION_PATCH', '1')
 
 
 configure_file(input : 'libtypec_utils_config.h.in', output : 'libtypec_utils_config.h', configuration : conf_data)
