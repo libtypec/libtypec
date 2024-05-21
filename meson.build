@@ -21,4 +21,11 @@ library('typec',
 	version : meson.project_version(),
 	soversion : '5',
 	dependencies: libudev_dep,
+	install: true,
+)
+
+install_headers(
+	'libtypec.h',
+	meson.current_build_dir() + '/libtypec_config.h',
+	install_dir: 'include'
 )
