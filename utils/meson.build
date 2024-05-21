@@ -1,13 +1,14 @@
 project('libtypec_utils','c',
 license: 'MIT',
+version: '0.5.1',
 default_options : [
 	'warning_level=0'])
 
 conf_data = configuration_data()
-conf_data.set('libtypec_utils_VERSION_MAJOR', '0')
-conf_data.set('libtypec_utils_VERSION_MINOR', '5')
-conf_data.set('libtypec_utils_VERSION_PATCH', '1')
-
+split = meson.project_version().split('.')
+conf_data.set('libtypec_utils_VERSION_MAJOR', split[0])
+conf_data.set('libtypec_utils_VERSION_MINOR', split[1])
+conf_data.set('libtypec_utils_VERSION_PATCH', split[2])
 
 configure_file(input : 'libtypec_utils_config.h.in', output : 'libtypec_utils_config.h', configuration : conf_data)
 
