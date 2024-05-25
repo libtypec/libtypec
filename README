@@ -1,49 +1,6 @@
-MIT License
-
-Copyright (c) 2023 Rajaram Regupathy <rajaram.regupathy@gmail.com>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
 libtypec
 ++++++++
 
 USB Type-C and USB Power Delivery systems are with multiple specification versions, platform designs and microcontroller vendors to manage data, power and display.
 
 This library defines a generic way for userspace System Software on Linux, Android, Chrome OS or Other OSes to build developer tools or other management applications for USB Type-C and USB Power Delivery class devices.
-
-Build Procedure
-+++++++++++++++
-
-You could build and generate packages using the steps given below:
-
-Step 1 - Generate build configuration for libtypec
-
-../libtypec$ cmake -DCMAKE_BUILD_TYPE=Release .
-
-Step 2 - Build libtypec and install library and binaries
-
-../libtypec$ sudo cmake --build . --target install --config Release
-
-Step 3 - Generate debian package as follows
-
-../libtypec$ sudo cpack -G DEB
-
-Step 4 - Generate RPM package as follows
-
-../libtypec$ sudo cpack -G RPM
