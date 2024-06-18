@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(libtypec_utils VERSION 0.5.1)
+project(libtypec_utils VERSION 0.5.2)
 
 configure_file(libtypec_utils_config.h.in libtypec_utils_config.h)
 
