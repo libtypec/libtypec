@@ -25,8 +25,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-
 #include <getopt.h>
+#include <ctype.h>
 
 #include "../libtypec.h"
 #include "lstypec.h"
@@ -42,7 +42,102 @@ unsigned int* pdo_data;
 
 struct altmode_data am_data[64];
 char *session_info[LIBTYPEC_SESSION_MAX_INDEX];
-int verbose = 0;
+
+typedef struct {
+    int verbose;
+    int help;
+    int port_num;
+    int ppm;
+    int partner_num;
+    int cb_num;
+    int am;
+    int backend; // 0 for sysfs, 1 for debugfs
+} CmdArgs;
+
+CmdArgs lstypec_args;
+
+struct option long_options[] = {
+    {"verbose", no_argument, &lstypec_args.verbose, 1},
+    {"help", no_argument, &lstypec_args.help, 1},
+    {"[p]ort", required_argument, NULL, 'p'},
+    {"ppm", no_argument, &lstypec_args.ppm, 1},
+    {"partner", required_argument, NULL, 'r'},
+    {"cb", required_argument, NULL, 'c'},
+    {"am", no_argument, &lstypec_args.am, 1},
+    {"backend", required_argument, NULL, 'b'},
+    {0, 0, 0, 0}
+};
+
+void print_usage() {
+    printf("-v  display verbose info\n");
+    printf("-h  display usage\n");
+    printf("-p [num] prints details specific of a port number indicated in num\n");
+    printf("-ppm print only Platform Policy Manager details only\n");
+    printf("-partner [num] print port partner details of the port represented in num\n");
+    printf("-cb [num] print cable details from the particular port\n");
+    printf("-am print alternate mode details of port/partner/cable\n");
+    printf("-backend [string] where string is debugfs or sysfs sets, convert it to int. backend to be used by libtypec\n");
+}
+
+void parse_args(int argc, char *argv[]) {
+    int opt;
+
+    // Initialize the CmdArgs structure with default values
+    lstypec_args.verbose = 0;
+    lstypec_args.help = 0;
+    lstypec_args.port_num = -1; // -1 indicates no port number specified
+    lstypec_args.ppm = 0;
+    lstypec_args.partner_num = -1; // -1 indicates no partner number specified
+    lstypec_args.cb_num = -1; // -1 indicates no cable number specified
+    lstypec_args.am = -1; // -1 indicates no alternate mode number specified
+    lstypec_args.backend = 0; // default backend is sysfs
+
+  for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-v") == 0) {
+            lstypec_args.verbose = 1;
+        } else if (strcmp(argv[i], "-h") == 0) {
+            lstypec_args.help = 1;
+            print_usage();
+            exit(EXIT_SUCCESS);
+        } else if (strcmp(argv[i], "-p") == 0) {
+            if (i+1 >= argc || !isdigit(argv[i+1][0])) {
+                printf("Error: -p requires a number argument\n");
+                exit(EXIT_FAILURE);
+            }
+            lstypec_args.port_num = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-ppm") == 0) {
+            lstypec_args.ppm = 1;
+        } else if (strcmp(argv[i], "-partner") == 0) {
+            if (i+1 >= argc || !isdigit(argv[i+1][0])) {
+                printf("Error: -partner requires a number argument\n");
+                exit(EXIT_FAILURE);
+            }
+            lstypec_args.partner_num = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-cb") == 0) {
+            if (i+1 >= argc || !isdigit(argv[i+1][0])) {
+                printf("Error: -cb requires a number argument\n");
+                exit(EXIT_FAILURE);
+            }
+            lstypec_args.cb_num = atoi(argv[++i]);
+        }  else if (strcmp(argv[i], "-am") == 0) {
+            lstypec_args.am = 1 ;
+        } else if (strcmp(argv[i], "-backend") == 0) {
+            if (i+1 >= argc || (strcmp(argv[i+1], "debugfs") != 0 && strcmp(argv[i+1], "sysfs") != 0)) {
+                printf("Error: -backend requires a string argument (debugfs or sysfs)\n");
+                exit(EXIT_FAILURE);
+            }
+            if (strcmp(argv[++i], "debugfs") == 0) {
+                lstypec_args.backend = LIBTYPEC_BACKEND_DBGFS;
+            } else if (strcmp(argv[i], "sysfs") == 0) {
+                lstypec_args.backend = LIBTYPEC_BACKEND_SYSFS;
+            }
+        } else {
+            printf("Error: Unknown argument %s\n", argv[i]);
+            exit(EXIT_FAILURE);
+        }
+    }
+    
+}
 
 enum product_type get_cable_product_type(short rev, uint32_t id)
 {
@@ -208,7 +303,7 @@ void print_conn_capability(struct libtypec_connector_cap_data conn_data)
 {
     char *opr_mode_str[] = {"Rp Only", "Rd Only", "DRP(Rp/Rd)", "Analog Audio", "Debug Accessory", "USB2", "USB3", "Alternate Mode"};
 
-    printf("  Operation Mode: 0x%02x\n", conn_data.opr_mode);
+    printf("  Operation Mode: 0x%02x (%s)\n", conn_data.opr_mode,opr_mode_str[conn_data.opr_mode]);
 }
 
 void print_cable_prop(struct libtypec_cable_property cable_prop, int conn_num)
@@ -246,7 +341,7 @@ void print_alternate_mode_data(int recipient, uint32_t id_header, int num_modes,
       printf("  Local Mode %d:\n", i);
       printf("    SVID: 0x%04x (%s)\n", am_data[i].svid,vendor_id);
       printf("    VDO: 0x%08x\n", am_data[i].vdo);
-      if (verbose) {
+      if (lstypec_args.verbose) {
         switch(am_data[i].svid){
         case 0x8087:
           print_vdo(am_data[i].vdo, 7, tbt3_sop_fields, tbt3_sop_field_desc);
@@ -269,7 +364,7 @@ void print_alternate_mode_data(int recipient, uint32_t id_header, int num_modes,
       printf("  Partner Mode %d:\n", i);
       printf("    SVID: 0x%04x (%s)\n", am_data[i].svid,vendor_id);
       printf("    VDO: 0x%08x\n", am_data[i].vdo);
-      if (verbose) {
+      if (lstypec_args.verbose) {
         switch(am_data[i].svid){
         case 0x8087:
           print_vdo(am_data[i].vdo, 7, tbt3_sop_fields, tbt3_sop_field_desc);
@@ -293,7 +388,7 @@ void print_alternate_mode_data(int recipient, uint32_t id_header, int num_modes,
       printf("    SVID: 0x%04x (%s)\n", am_data[i].svid,vendor_id);
       printf("    VDO: 0x%08x\n", am_data[i].vdo);
 
-      if (verbose) {
+      if (lstypec_args.verbose) {
         switch(am_data[i].svid){
         case 0x8087:
           print_vdo(am_data[i].vdo, 7, tbt3_sop_pr_fields, tbt3_sop_pr_field_desc);
@@ -327,7 +422,7 @@ void print_identity_data(int recipient, union libtypec_discovered_identity id, s
     printf("  Partner Identity :\n");
 
     // Partner ID
-    if (verbose)
+    if (lstypec_args.verbose)
     {
       // ID Header/Cert Stat/Product are base on revision
       switch (conn_data.partner_rev)
@@ -448,7 +543,7 @@ void print_identity_data(int recipient, union libtypec_discovered_identity id, s
     printf("  Cable Identity :\n");
 
     // Partner ID
-    if (verbose)
+    if (lstypec_args.verbose)
     {
       // ID Header/Cert Stat/Product are base on revision
       switch (conn_data.cable_rev)
@@ -555,7 +650,7 @@ void print_source_pdo_data(unsigned int* pdo_data, int num_pdos, int revision) {
   for (int i = 0; i < num_pdos; i++) {
     printf("    PDO%d: 0x%08x\n", i+1, pdo_data[i]);
 
-    if (verbose) {
+    if (lstypec_args.verbose) {
       if (revision == 0x200) {
         switch((pdo_data[i] >> 30)) {
           case PDO_FIXED:
@@ -607,7 +702,7 @@ void print_sink_pdo_data(unsigned int* pdo_data, int num_pdos, int revision) {
   for (int i = 0; i < num_pdos; i++) {
     printf("    PDO%d: 0x%08x\n", i+1, pdo_data[i]);
 
-    if (verbose) {
+    if (lstypec_args.verbose) {
       if (revision == 0x200) {
         switch((pdo_data[i] >> 30)) {
           case PDO_FIXED:
@@ -665,95 +760,11 @@ void lstypec_print(char *val, int type)
     else
         printf("lstypec - INFO - %s\n", val);
 }
-
-int main(int argc, char *argv[])
+void print_capabilities_partner(int i)
 {
-  int ret, opt, num_modes, num_pdos;
+    int ret, opt, num_modes, num_pdos;
 
-  // Process Command Args
-  static const struct option options[] = {
-    {"verbose", 0, 0, 'v'},
-    {"help", 0, 0, 'h'},
-    {0, 0, 0, 0},
-  };
-
-  while ((opt = getopt_long(argc, argv, "vh", options, NULL)) != -1) {
-    switch (opt) {
-    case 'v':
-      verbose = 1;
-      break;
-    case 'h':
-      printf("lstypec will print information about connected USB-C devices\n-v to increase verbosity\n-h for help\n");
-      return 0;
-    }
-  }
-
-  names_init();
-
-  // Initialize libtypec and print session info
-  ret = libtypec_init(session_info);
-  if (ret < 0)
-    lstypec_print("Failed in Initializing libtypec", LSTYPEC_ERROR);
-
-  print_session_info();
-
-  // PPM Capabilities
-  ret = libtypec_get_capability(&get_cap_data);
-  if (ret < 0)
-    lstypec_print("Failed in Get Capability", LSTYPEC_ERROR);
-
-  print_ppm_capability(get_cap_data);
-
-  for (int i = 0; i < get_cap_data.bNumConnectors; i++) {
-    // Resetting port properties
-    cable_prop.cable_type = CABLE_TYPE_UNKNOWN;
-    cable_prop.plug_end_type = PLUG_TYPE_OTH;
-
-    // Connector Capabilities
-    printf("\nConnector %d Capability/Status\n", i);
-    libtypec_get_conn_capability(i, &conn_data);
-    print_conn_capability(conn_data);
-
-
-    // Connector PDOs
-    pdo_data = malloc(sizeof(int)*8);
-    ret = libtypec_get_pdos(i, 0, 0, &num_pdos, 1, 0, pdo_data);
-    if (ret > 0) {
-      printf("  Connector PDO Data (Source):\n");
-      print_source_pdo_data(pdo_data, num_pdos, get_cap_data.bcdPDVersion);
-    }
-
-    ret = libtypec_get_pdos(i, 0, 0, &num_pdos, 0, 0, pdo_data);
-    if (ret > 0) {
-      printf("  Connector PDO Data (Sink):\n");
-      print_source_pdo_data(pdo_data, num_pdos, get_cap_data.bcdPDVersion);
-    }
-    free(pdo_data);
-
-    // Cable Properties
-    ret = libtypec_get_cable_properties(i, &cable_prop);
-    if (ret >= 0)
-      print_cable_prop(cable_prop, i);
-    
-    // Supported Alternate Modes
-    printf("  Alternate Modes Supported:\n");
-  
-    num_modes = libtypec_get_alternate_modes(AM_CONNECTOR, i, am_data);
-    if (num_modes > 0)
-      print_alternate_mode_data(AM_CONNECTOR, 0x0, num_modes, am_data);
-    else
-      printf("    No Local Modes listed with typec class\n");
-   
-    // Cable
-    num_modes = libtypec_get_alternate_modes(AM_SOP_PR, i, am_data);
-    if (num_modes >= 0) 
-      print_alternate_mode_data(AM_SOP_PR, id.disc_id.id_header, num_modes, am_data);
-    ret = libtypec_get_pd_message(AM_SOP_PR, i, 24, DISCOVER_ID_REQ, id.buf_disc_id);
-    if (ret >= 0) {
-      print_identity_data(AM_SOP_PR, id, conn_data);
-    }
-    
-    // Partner
+   // Partner
     num_modes = libtypec_get_alternate_modes(AM_SOP, i, am_data);
     if (num_modes >= 0) 
       print_alternate_mode_data(AM_SOP, id.disc_id.id_header, num_modes, am_data);
@@ -776,9 +787,309 @@ int main(int argc, char *argv[])
     }
   
     free(pdo_data);
+
+}
+void print_capabilities_cable(int i)
+{
+    int ret, opt, num_modes, num_pdos;
+
+     // Resetting port properties
+    cable_prop.cable_type = CABLE_TYPE_UNKNOWN;
+    cable_prop.plug_end_type = PLUG_TYPE_OTH;
+   // Cable Properties
+    
+    ret = libtypec_get_cable_properties(i, &cable_prop);
+    if (ret >= 0)
+      print_cable_prop(cable_prop, i);
+
+        // Cable
+    num_modes = libtypec_get_alternate_modes(AM_SOP_PR, i, am_data);
+    if (num_modes >= 0) 
+      print_alternate_mode_data(AM_SOP_PR, id.disc_id.id_header, num_modes, am_data);
+
+    ret = libtypec_get_pd_message(AM_SOP_PR, i, 24, DISCOVER_ID_REQ, id.buf_disc_id);
+    if (ret >= 0) {
+      print_identity_data(AM_SOP_PR, id, conn_data);
+    }
+
+}
+void print_capabilities_port(int i)
+{
+    int ret, opt, num_modes, num_pdos;
+
+    // Connector Capabilities
+    printf("\nConnector %d Capability/Status\n", i);
+    libtypec_get_conn_capability(i, &conn_data);
+    print_conn_capability(conn_data);
+
+
+    // Connector PDOs
+    pdo_data = malloc(sizeof(int)*8);
+    ret = libtypec_get_pdos(i, 0, 0, &num_pdos, 1, 0, pdo_data);
+    if (ret > 0) {
+      printf("  Connector PDO Data (Source):\n");
+      print_source_pdo_data(pdo_data, num_pdos, get_cap_data.bcdPDVersion);
+    }
+    else
+        printf("  Connector PDO Data (Source) returned : %d\n", ret);
+
+
+    ret = libtypec_get_pdos(i, 0, 0, &num_pdos, 0, 0, pdo_data);
+    if (ret > 0) {
+      printf("  Connector PDO Data (Sink):\n");
+      print_source_pdo_data(pdo_data, num_pdos, get_cap_data.bcdPDVersion);
+    }
+    else
+        printf("  Connector PDO Data (Source) returned : %d\n", ret);
+
+    free(pdo_data);
+    
+    // Supported Alternate Modes
+    printf("  Alternate Modes Supported:\n");
+  
+    num_modes = libtypec_get_alternate_modes(AM_CONNECTOR, i, am_data);
+    if (num_modes > 0)
+      print_alternate_mode_data(AM_CONNECTOR, 0x0, num_modes, am_data);
+    else
+      printf("    No Local Modes listed with typec class\n");
+   
+}
+void lstypec_print_am()
+{
+  int ret;
+
+  if(lstypec_args.backend == LIBTYPEC_BACKEND_DBGFS)
+    ret = libtypec_init(session_info,LIBTYPEC_BACKEND_DBGFS);
+  else
+    // Initialize libtypec by default with sysfs and print session info
+    ret = libtypec_init(session_info,LIBTYPEC_BACKEND_SYSFS);
+
+  if (ret < 0)
+    lstypec_print("Failed in Initializing libtypec", LSTYPEC_ERROR);
+
+  // PPM Capabilities
+  ret = libtypec_get_capability(&get_cap_data);
+  if (ret < 0)
+    lstypec_print("Failed in Get Capability", LSTYPEC_ERROR);
+
+  if(lstypec_args.port_num != -1)
+  {
+      if(lstypec_args.port_num >= get_cap_data.bNumConnectors) 
+      {
+          printf("lstypec - ERROR - %s, Provide one less than Num Ports %d \n", "Port number out of range",get_cap_data.bNumConnectors);
+          exit(1);
+      }
+      int num_modes = libtypec_get_alternate_modes(AM_CONNECTOR, lstypec_args.port_num, am_data);
+
+      if (num_modes > 0)
+      print_alternate_mode_data(AM_CONNECTOR, 0x0, num_modes, am_data);
+      else
+      printf("    No Local Modes listed with typec class\n"); 
+  }
+  else if(lstypec_args.partner_num != -1)
+  {
+    if(lstypec_args.partner_num >= get_cap_data.bNumConnectors) 
+    {
+        printf("lstypec - ERROR - %s, Provide one less than Num Ports %d \n", "Port number out of range",get_cap_data.bNumConnectors);
+        exit(1);
+    }
+     // Partner
+    int num_modes = libtypec_get_alternate_modes(AM_SOP, lstypec_args.partner_num, am_data);
+    if (num_modes >= 0) 
+      print_alternate_mode_data(AM_SOP, id.disc_id.id_header, num_modes, am_data);
+    ret = libtypec_get_pd_message(AM_SOP, lstypec_args.partner_num, 24, DISCOVER_ID_REQ, id.buf_disc_id);
+    if (ret >= 0) {
+      print_identity_data(AM_SOP, id, conn_data);
+    }
+  }
+  else if(lstypec_args.cb_num != -1)
+  {
+    if(lstypec_args.cb_num >= get_cap_data.bNumConnectors) 
+    {
+        printf("lstypec - ERROR - %s, Provide one less than Num Ports %d \n", "Port number out of range",get_cap_data.bNumConnectors);
+        exit(1);
+    }
+            // Cable
+    int num_modes = libtypec_get_alternate_modes(AM_SOP_PR, lstypec_args.cb_num, am_data);
+    if (num_modes >= 0) 
+      print_alternate_mode_data(AM_SOP_PR, id.disc_id.id_header, num_modes, am_data);
+
+  }
+  else
+  {
+    printf("lstypec - ERROR - %s\n", "Provide Port/Partner/Cable number for Alternate Mode Information");
+    exit(1);
   }
 
   printf("\n");
+}
+void lstypec_print_partner()
+{
+  int ret;
+
+  if(lstypec_args.backend == LIBTYPEC_BACKEND_DBGFS)
+    ret = libtypec_init(session_info,LIBTYPEC_BACKEND_DBGFS);
+  else
+    // Initialize libtypec by default with sysfs and print session info
+    ret = libtypec_init(session_info,LIBTYPEC_BACKEND_SYSFS);
+
+  if (ret < 0)
+    lstypec_print("Failed in Initializing libtypec", LSTYPEC_ERROR);
+
+  // PPM Capabilities
+  ret = libtypec_get_capability(&get_cap_data);
+  if (ret < 0)
+    lstypec_print("Failed in Get Capability", LSTYPEC_ERROR);
+
+  if(lstypec_args.partner_num >= get_cap_data.bNumConnectors) 
+  {
+        printf("lstypec - ERROR - %s, Provide one less than Num Ports %d \n", "Port number out of range",get_cap_data.bNumConnectors);
+        exit(1);
+  }
+  
+  print_capabilities_partner(lstypec_args.partner_num);
+
+}
+void lstypec_print_cable()
+{
+  int ret;
+
+  if(lstypec_args.backend == LIBTYPEC_BACKEND_DBGFS)
+    ret = libtypec_init(session_info,LIBTYPEC_BACKEND_DBGFS);
+  else
+    // Initialize libtypec by default with sysfs and print session info
+    ret = libtypec_init(session_info,LIBTYPEC_BACKEND_SYSFS);
+
+  if (ret < 0)
+    lstypec_print("Failed in Initializing libtypec", LSTYPEC_ERROR);
+
+  // PPM Capabilities
+  ret = libtypec_get_capability(&get_cap_data);
+  if (ret < 0)
+    lstypec_print("Failed in Get Capability", LSTYPEC_ERROR);
+
+  if(lstypec_args.cb_num >= get_cap_data.bNumConnectors) 
+  {
+        printf("lstypec - ERROR - %s, Provide one less than Num Ports %d \n", "Port number out of range",get_cap_data.bNumConnectors);
+        exit(1);
+  }
+  print_capabilities_cable(lstypec_args.cb_num);
+
+}
+
+void lstypec_print_port()
+{
+  int ret;
+
+  if(lstypec_args.backend == LIBTYPEC_BACKEND_DBGFS)
+    ret = libtypec_init(session_info,LIBTYPEC_BACKEND_DBGFS);
+  else
+    // Initialize libtypec by default with sysfs and print session info
+    ret = libtypec_init(session_info,LIBTYPEC_BACKEND_SYSFS);
+
+  if (ret < 0)
+    lstypec_print("Failed in Initializing libtypec", LSTYPEC_ERROR);
+
+  // PPM Capabilities
+  ret = libtypec_get_capability(&get_cap_data);
+  if (ret < 0)
+    lstypec_print("Failed in Get Capability", LSTYPEC_ERROR);
+
+  if(lstypec_args.port_num >= get_cap_data.bNumConnectors) 
+  {
+        printf("lstypec - ERROR - %s, Provide one less than Num Ports %d \n", "Port number out of range",get_cap_data.bNumConnectors);
+        exit(1);
+  }
+  
+  print_capabilities_port(lstypec_args.port_num);
+
+}
+
+void lstypec_default_verbose()
+{
+  int ret;
+
+  if(lstypec_args.backend == LIBTYPEC_BACKEND_DBGFS)
+    ret = libtypec_init(session_info,LIBTYPEC_BACKEND_DBGFS);
+  else
+    // Initialize libtypec by default with sysfs and print session info
+    ret = libtypec_init(session_info,LIBTYPEC_BACKEND_SYSFS);
+
+  if (ret < 0)
+    lstypec_print("Failed in Initializing libtypec", LSTYPEC_ERROR);
+
+  print_session_info();
+
+  // PPM Capabilities
+  ret = libtypec_get_capability(&get_cap_data);
+  if (ret < 0)
+    lstypec_print("Failed in Get Capability", LSTYPEC_ERROR);
+
+  print_ppm_capability(get_cap_data);
+
+  for (int i = 0; i < get_cap_data.bNumConnectors; i++) 
+  {
+      print_capabilities_port(i);
+      print_capabilities_cable(i);
+      print_capabilities_partner(i);
+  }
+
+  printf("\n");
+
+}
+int main(int argc, char *argv[])
+{
+
+  parse_args(argc, argv);
+
+  names_init();
+
+  if (lstypec_args.port_num != -1) {
+      lstypec_print_port();
+      goto cleanup;
+  }
+
+    if (lstypec_args.ppm) 
+    {
+      int ret;
+
+      if(lstypec_args.backend == LIBTYPEC_BACKEND_DBGFS)
+        ret = libtypec_init(session_info,LIBTYPEC_BACKEND_DBGFS);
+      else
+        // Initialize libtypec by default with sysfs and print session info
+        ret = libtypec_init(session_info,LIBTYPEC_BACKEND_SYSFS);
+
+      if (ret < 0)
+        lstypec_print("Failed in Initializing libtypec", LSTYPEC_ERROR);
+
+      print_session_info();
+
+      // PPM Capabilities
+      ret = libtypec_get_capability(&get_cap_data);
+      if (ret < 0)
+        lstypec_print("Failed in Get Capability", LSTYPEC_ERROR);
+
+      print_ppm_capability(get_cap_data);
+
+      goto cleanup;
+    }
+    if(lstypec_args.am != -1)
+    {
+        lstypec_print_am();
+        goto cleanup;
+    }
+    if (lstypec_args.partner_num != -1) {
+        lstypec_print_partner();
+        goto cleanup;
+    }
+
+    if (lstypec_args.cb_num != -1) {
+        lstypec_print_cable();
+        goto cleanup;
+    }
+
+  lstypec_default_verbose();
+cleanup:
   names_exit();
 }
 

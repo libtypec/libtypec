@@ -241,7 +241,7 @@ int main (int argc, char **argv)
 
     names_init();
 
-    ret = libtypec_init(session_info);
+    ret = libtypec_init(session_info,LIBTYPEC_BACKEND_SYSFS);
 
     if (ret < 0)
     {
