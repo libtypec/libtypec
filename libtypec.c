@@ -42,13 +42,9 @@ SOFTWARE.
 #include <sys/stat.h>
 #include <fcntl.h>
 
-static int ops_method = -1;
 static char ver_buf[64];
 static struct utsname ker_uname;
 static const struct libtypec_os_backend *cur_libtypec_os_backend;
-
-#define OPS_METHOD_DBGFS 0
-#define OPS_METHOD_SYSFS 1
 
 
 /**
@@ -93,6 +89,7 @@ static const struct libtypec_os_backend *cur_libtypec_os_backend;
  * Connector System Software Interface (UCSI) Specification.
  *
  */
+static     char *ops_str[] = {"sysfs","debugfs"};
 
 char *get_kernel_verion(void)
 {
@@ -143,11 +140,10 @@ char *get_os_name(void)
  *
  * \returns 0 on success
  */
-int libtypec_init(char **session_info)
+int libtypec_init(char **session_info, enum libtypec_backend backend)
 {
     int ret;
     struct statfs sb;
-    char *ops_str[] = {"debugfs","sysfs"};
 
     sprintf(ver_buf, "libtypec %d.%d.%d", LIBTYPEC_MAJOR_VERSION, LIBTYPEC_MINOR_VERSION,LIBTYPEC_PATCH_VERSION);
 
@@ -155,35 +151,33 @@ int libtypec_init(char **session_info)
     session_info[LIBTYPEC_KERNEL_INDEX] = get_kernel_verion();
     session_info[LIBTYPEC_OS_INDEX] = get_os_name();
 
-    /**
-        debugfs provides direct access to UCSI command and response.
-        Try opening debugfs before falling back to sysfs
-    */
-    ret = statfs(UCSI_DEBUGFS_PATH, &sb);
-
-    if (ret == 0 && sb.f_type == DEBUGFS_MAGIC)
+    if (backend == LIBTYPEC_BACKEND_DBGFS)
     {
-            ops_method = OPS_METHOD_DBGFS;
-            cur_libtypec_os_backend = &libtypec_lnx_dbgfs_backend;
-	    if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->init );
+        cur_libtypec_os_backend = &libtypec_lnx_dbgfs_backend;
+
+	    if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->init )
+        {
+            ret = -EIO;
+            printf("Failed to initialize dbgfs backend\n");
+        }
 	    else
                 ret = cur_libtypec_os_backend->init(session_info);
     }
-    else
+    else 
     {
-        ret = statfs(SYSFS_TYPEC_PATH, &sb);
-
-        if (ret == 0 && sb.f_type == SYSFS_MAGIC)
-        {
-            ops_method = OPS_METHOD_SYSFS;
             cur_libtypec_os_backend = &libtypec_lnx_sysfs_backend;
-            if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->init );
+
+            if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->init )
+            {
+                printf("Failed to initialize sysfs backend\n");
+                ret = -EIO;
+            }
             else
             	ret = cur_libtypec_os_backend->init(session_info);
-        }    
+            
     }
 
-    session_info[LIBTYPEC_OPS_INDEX] = ops_str[ops_method];
+    session_info[LIBTYPEC_OPS_INDEX] = ops_str[backend];
 
     return ret;
 }

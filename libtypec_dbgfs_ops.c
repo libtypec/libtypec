@@ -70,23 +70,79 @@ int get_ucsi_response(char *data)
 	lseek(fp_response,0,SEEK_SET);
 	return j;
 }
+#define MAX_PATH 1000
+
+int search_dbgfs_files(char *basePath, char *commandPath, char *responsePath) {
+    char path[MAX_PATH];
+    struct dirent *dp;
+    DIR *dir = opendir(basePath);
+    int commandFound = 0, responseFound = 0;
+
+    // Unable to open directory stream
+    if (!dir)
+        return -1;
+
+    while ((dp = readdir(dir)) != NULL) {
+        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
+            // Construct new path from our base path
+            strncpy(path, basePath, sizeof(path));
+            strncat(path, "/", sizeof(path) - strlen(path) - 1);
+            strncat(path, dp->d_name, sizeof(path) - strlen(path) - 1);
+
+            if (strcmp(dp->d_name, "command") == 0) {
+                strncpy(commandPath, path, MAX_PATH);
+                commandFound = 1;
+            }
+
+            if (strcmp(dp->d_name, "response") == 0) {
+                strncpy(responsePath, path, MAX_PATH);
+                responseFound = 1;
+            }
+
+            if (commandFound && responseFound) {
+                closedir(dir);
+                return 0;
+            }
+
+            if (search_dbgfs_files(path, commandPath, responsePath) == 0) {
+                closedir(dir);
+                return 0;
+            }
+        }
+    }
+
+    closedir(dir);
+    return -1;
+}
 static int libtypec_dbgfs_init(char **session_info)
 {
 
-   	fp_command = open("/sys/kernel/debug/usb/ucsi/USBC000:00/command", O_WRONLY);
-	
-	if (fp_command <= 0)
-		return -1;
+ 	char commandPath[MAX_PATH] = {0};
+    char responsePath[MAX_PATH] = {0};
 
-   	fp_response = open("/sys/kernel/debug/usb/ucsi/USBC000:00/response",O_RDONLY);
-	
-	if (fp_response <= 0)
-		return -1;
+    if (search_dbgfs_files("/sys/kernel/debug/usb/ucsi", commandPath, responsePath) == 0) 
+	{
+		fp_command = open(commandPath, O_WRONLY);
+		
+		if (fp_command <= 0)
+			return -1;
 
-	pfds.fd = fp_response;
-	pfds.events = POLLIN;
-	
-	return 0;
+		fp_response = open(responsePath,O_RDONLY);
+		
+		if (fp_response <= 0)
+			return -1;
+
+		pfds.fd = fp_response;
+		pfds.events = POLLIN;
+		
+		return 0;
+	}
+	else
+	{
+		printf("Failed to open ucsi debugfs files\n");
+
+		return -EIO;
+	}
 }
 
 static int libtypec_dbgfs_exit(void)

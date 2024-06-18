@@ -638,7 +638,7 @@ static int libtypec_sysfs_get_conn_capability_ops(int conn_num, struct libtypec_
 
 	if (lstat(path_str, &sb) == -1)
 	{
-		printf("Incorrect connector number : failed to open, %s", path_str);
+		printf("Incorrect connector number : failed to open, %s\n", path_str);
 		return -1;
 	}
 
@@ -679,7 +679,7 @@ static int libtypec_sysfs_get_alternate_modes(int recipient, int conn_num, struc
 
 	if (lstat(path_str, &sb) == -1)
 	{
-		printf("Incorrect connector number : failed to open, %s", path_str);
+		printf("Incorrect connector number : failed to open, %s\n", path_str);
 		return -1;
 	}
 
@@ -880,7 +880,7 @@ static int libtypec_sysfs_get_discovered_identity_ops(int recipient, int conn_nu
 
 	if (lstat(path_str, &sb) == -1)
 	{
-		printf("Incorrect connector number : failed to open, %s", path_str);
+		printf("Incorrect connector number : failed to open, %s\n", path_str);
 		return -1;
 	}
 
@@ -991,11 +991,12 @@ static int libtypec_sysfs_get_pdos_ops(int conn_num, int partner, int offset, in
 	snprintf(path_str, sizeof(path_str), SYSFS_TYPEC_PATH "/port%d", conn_num);
 
 	typec_path = opendir(path_str);
-        if (typec_path == NULL)
+    if (typec_path == NULL)
 	{
-		printf("Incorrect connector number : failed to open, %s", path_str);
+		printf("Incorrect connector number : failed to open, %s\n", path_str);
 		return -1;
 	}
+    closedir(typec_path);
 
 	if (partner == 0)
 	{
@@ -1012,11 +1013,15 @@ static int libtypec_sysfs_get_pdos_ops(int conn_num, int partner, int offset, in
 			snprintf(path_str, sizeof(path_str), SYSFS_TYPEC_PATH "/port%d-partner/usb_power_delivery/sink-capabilities", conn_num);		
 	}
 
+	typec_path = opendir(path_str);
+
+	if (typec_path == NULL)
+		goto finalize; /*No PDOs*/
+
 	while ((typec_entry = readdir(typec_path)))
 	{
 		memset(port_content, 0, sizeof(port_content));
 		snprintf(port_content, sizeof(port_content), "%s/%s", path_str,typec_entry->d_name);
-
 		if(strstr(typec_entry->d_name, "fixed"))
 		{
 			pdo_data[num_pdos_read++] = get_fixed_supply_pdo(port_content,src_snk);
@@ -1037,13 +1042,11 @@ static int libtypec_sysfs_get_pdos_ops(int conn_num, int partner, int offset, in
 			pdo_data[num_pdos_read++] = get_programmable_supply_pdo(port_content,src_snk);
 
 		}
-
-		
 		
 	}
+	closedir(typec_path);
 
-        closedir(typec_path);
-	
+finalize:
 	*num_pdo = num_pdos_read;
 
 	return num_pdos_read;

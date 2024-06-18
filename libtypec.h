@@ -288,6 +288,11 @@ enum usb_typec_event {
     USBC_DEVICE_DISCONNECTED,
     USBC_EVENT_COUNT
 };
+enum libtypec_backend {
+    LIBTYPEC_BACKEND_SYSFS=0,
+    LIBTYPEC_BACKEND_DBGFS,
+    /*LIBTYPEC_BACKEND_I2C,*/ /*Potential backend interface*/
+};
 
 typedef void (*usb_typec_callback_t)(enum usb_typec_event event, void* data);
 
@@ -298,7 +303,7 @@ typedef struct libtypec_notification_list{
 } libtypec_notification_list_t;
 
 
-int libtypec_init(char **session_info);
+int libtypec_init(char **session_info,enum libtypec_backend backend);
 int libtypec_exit(void);
 
 /**
