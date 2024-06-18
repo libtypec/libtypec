@@ -644,27 +644,25 @@ static int libtypec_sysfs_get_conn_capability_ops(int conn_num, struct libtypec_
 
 	snprintf(port_content, sizeof(port_content), "%s/%s", path_str, "power_role");
 
-	conn_cap_data->opr_mode = get_opr_mode(port_content);
+	conn_cap_data->opr_mode.raw_operationmode = get_opr_mode(port_content);
 
-	if (conn_cap_data->opr_mode == OPR_MODE_DRP_ONLY)
+	if (conn_cap_data->opr_mode.raw_operationmode == OPR_MODE_DRP_ONLY)
 	{
 		conn_cap_data->provider = 1;
 		conn_cap_data->consumer = 1;
 	}
-	else if (conn_cap_data->opr_mode == OPR_MODE_RD_ONLY)
+	else if (conn_cap_data->opr_mode.raw_operationmode == OPR_MODE_RD_ONLY)
 		conn_cap_data->consumer = 1;
 	else
 		conn_cap_data->provider = 1;
+
+	conn_cap_data->opr_mode.raw_operationmode = 1 <<  conn_cap_data->opr_mode.raw_operationmode;
 
 	if (get_os_type() == OS_TYPE_CHROME)
 	{
 		snprintf(port_content, sizeof(port_content), "%s/port%d-partner/%s", path_str, conn_num, "usb_power_delivery_revision");
 
-		conn_cap_data->partner_rev = get_pd_rev(port_content);
-
-		snprintf(port_content, sizeof(port_content), "%s/port%d-cable/%s", path_str, conn_num, "usb_power_delivery_revision");
-
-		conn_cap_data->cable_rev = get_pd_rev(port_content);
+		conn_cap_data->partner_pd_rev = get_pd_rev(port_content);
 	}
 	return 0;
 }
@@ -981,7 +979,7 @@ static int libtypec_sysfs_get_pd_message_ops(int recipient, int conn_num, int nu
 	return 0;
 }
 
-static int libtypec_sysfs_get_pdos_ops(int conn_num, int partner, int offset, int *num_pdo, int src_snk, int type, unsigned int *pdo_data)
+static int libtypec_sysfs_get_pdos_ops(int conn_num, int partner, int offset, int *num_pdo, int src_snk, int type, struct libtypec_get_pdos *pdo_data)
 {
 	int num_pdos_read = 0;
 	char path_str[512], port_content[512 + 256];
@@ -1024,22 +1022,22 @@ static int libtypec_sysfs_get_pdos_ops(int conn_num, int partner, int offset, in
 		snprintf(port_content, sizeof(port_content), "%s/%s", path_str,typec_entry->d_name);
 		if(strstr(typec_entry->d_name, "fixed"))
 		{
-			pdo_data[num_pdos_read++] = get_fixed_supply_pdo(port_content,src_snk);
+			pdo_data->pdo[num_pdos_read++] = get_fixed_supply_pdo(port_content,src_snk);
 
 		}
 		else if(strstr(typec_entry->d_name, "variable"))
 		{
-			pdo_data[num_pdos_read++] = get_variable_supply_pdo(port_content,src_snk);
+			pdo_data->pdo[num_pdos_read++] = get_variable_supply_pdo(port_content,src_snk);
 
 		}
 		else if(strstr(typec_entry->d_name, "battery"))
 		{
-			pdo_data[num_pdos_read++] = get_battery_supply_pdo(port_content,src_snk);
+			pdo_data->pdo[num_pdos_read++] = get_battery_supply_pdo(port_content,src_snk);
 
 		}
 		else if(strstr(typec_entry->d_name, "programmable"))
 		{
-			pdo_data[num_pdos_read++] = get_programmable_supply_pdo(port_content,src_snk);
+			pdo_data->pdo[num_pdos_read++] = get_programmable_supply_pdo(port_content,src_snk);
 
 		}
 		
