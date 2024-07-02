@@ -19,7 +19,7 @@ library('typec',
 	'libtypec_sysfs_ops.c',
 	'libtypec_dbgfs_ops.c',
 	version : meson.project_version(),
-	soversion : '5',
+	soversion : '0',
 	dependencies: libudev_dep,
 	install: true,
 )
