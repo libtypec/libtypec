@@ -1358,9 +1358,9 @@ void print_alternate_mode_data(int recipient, uint32_t id_header, int num_modes,
 
 void print_identity_data(int recipient, union libtypec_discovered_identity id, struct libtypec_connector_cap_data conn_data);
 
-void print_source_pdo_data(unsigned int* pdo_data, int num_pdos, int revision);
+void print_source_pdo_data(struct libtypec_get_pdos *pdo_data, int num_pdos, int revision);
 
-void print_sink_pdo_data(unsigned int* pdo_data, int num_pdos, int revision);
+void print_sink_pdo_data(struct libtypec_get_pdos *pdo_data, int num_pdos, int revision);
 
 void lstypec_print(char *val, int type);
 

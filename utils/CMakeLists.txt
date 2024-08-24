@@ -11,8 +11,12 @@ target_link_libraries(lstypec PUBLIC libtypec udev)
 add_executable(typecstatus typecstatus.c names.c)
 target_link_libraries(typecstatus PUBLIC libtypec udev)
 
+add_executable(ucsicontrol ucsicontrol.c names.c)
+target_link_libraries(ucsicontrol PUBLIC libtypec udev)
+
 option(LIBTYPEC_STRICT_CFLAGS "Compile for strict warnings" ON)
 if(LIBTYPEC_STRICT_CFLAGS)
     target_compile_options(lstypec PRIVATE -g -O2 -fstack-protector-strong -Wformat=1 -Werror=format-security -Wdate-time -fasynchronous-unwind-tables -D_FORTIFY_SOURCE=2)
     target_compile_options(typecstatus PRIVATE -g -O2 -fstack-protector-strong -Wformat=1 -Werror=format-security -Wdate-time -fasynchronous-unwind-tables -D_FORTIFY_SOURCE=2)
+    target_compile_options(ucsicontrol PRIVATE -g -O2 -fstack-protector-strong -Wformat=1 -Werror=format-security -Wdate-time -fasynchronous-unwind-tables -D_FORTIFY_SOURCE=2)
 endif()

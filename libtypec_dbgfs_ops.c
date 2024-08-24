@@ -48,27 +48,41 @@ int fp_command;
 int fp_response;
 struct pollfd  pfds;
 
-int get_ucsi_response(char *data)
-{
-	char c[64],i=0,j=0;
-	 if(fp_response <=0)
-	 	return -1;
+int hexCharToInt(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1; // Invalid character
+}
+int get_ucsi_response(unsigned char *data) {
+    char c[64];
+    unsigned char temp[64]; // Temporary buffer for reversal, assuming data will not exceed 64 bytes
+    int i = 0, j = 0, result, dataIndex = 0;
 
-	i=poll(&pfds,1,-1);
-	if(i<0)
-		return -1;
-	j = read(fp_response, c,64);
-	
-	for(i=2;i<j;i++)
-	{		
-		if(c[i] > '9')
-			data[i-2]=c[i]- 87;
-		else
-			data[i-2]=c[i]-'0';
+    if (fp_response <= 0) return -1;
 
-	}
-	lseek(fp_response,0,SEEK_SET);
-	return j;
+    result = poll(&pfds, 1, -1);
+    if (result < 0) return -1;
+
+    j = read(fp_response, c, 64);
+    if (j <= 2) return -1; // Not enough data read or no data to process
+
+    // Process two characters at a time
+    for (i = 2; i < j - 1; i += 2) { // Ensure there are always pairs of characters to process
+        int high = hexCharToInt(c[i]);
+        int low = hexCharToInt(c[i + 1]);
+        if (high < 0 || low < 0) return -1; // Invalid hex character
+
+        temp[dataIndex] = (high << 4) | low; // Combine two hex digits into one byte, store in temp
+        dataIndex++;
+    }
+
+    // Reverse the bytes from temp into data
+    for (i = 0; i < dataIndex; i++) {
+        data[i] = temp[dataIndex - 1 - i];
+    }
+    lseek(fp_response, 0, SEEK_SET);
+    return dataIndex; // Return the number of bytes processed and stored in data
 }
 #define MAX_PATH 1000
 
@@ -144,6 +158,40 @@ static int libtypec_dbgfs_init(char **session_info)
 		return -EIO;
 	}
 }
+static int libtypec_dbgfs_connector_reset_ops(int conn_num, int rst_type)
+{
+	int ret=-1;
+	unsigned char buf[64];
+	union conn_rst_cmd
+	{
+		struct {
+			unsigned int cmd : 8;
+			unsigned int data_leng : 8;
+			unsigned int con_num : 7;
+			unsigned int rst_type : 1;
+		};
+		unsigned int rst_cmd;
+	}rstcmd;
+
+	if(fp_command > 0)
+	{
+		rstcmd.cmd = 0x03;
+		rstcmd.data_leng = 0x00;
+		rstcmd.con_num = conn_num + 1;
+		rstcmd.rst_type = rst_type;
+
+		snprintf(buf, sizeof(buf), "0x%x", rstcmd.rst_cmd);
+		ret = write(fp_command,buf,sizeof(buf));
+
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+		}
+	}
+	return ret;
+}
 
 static int libtypec_dbgfs_exit(void)
 {
@@ -156,56 +204,44 @@ static int libtypec_dbgfs_exit(void)
 
 static int libtypec_dbgfs_get_capability_ops(struct libtypec_capability_data *cap_data)
 {
-    int ret=-1;
-	char buf[64];
+	int ret=-1;
+	char buf[64] = {0};
 
-    if(fp_command > 0)
-    {
-        ret = write(fp_command,"6",sizeof("6"));
- 
-        if(ret)
-        {
-            ret = get_ucsi_response(buf);
-
-            if(ret<31)
-                ret = -1;
-
-			cap_data->bmAttributes = buf[24] << 28 | buf[25] << 24 | buf[26] << 20 | buf[27] << 16 | buf[28] << 12 | buf[29] <<8 | buf[30] << 4 | buf[31];	
-			cap_data->bNumConnectors = buf[22] << 4 | buf[23] ;
-			cap_data->bmOptionalFeatures = buf[16] << 20 | buf[17] << 16 | buf[18] << 12 | buf[19] << 8 | buf[20] << 4 | buf[21] ;
-			cap_data->bNumAltModes = buf[14] << 4 | buf[15] ;
-			cap_data->bcdBCVersion = buf[8] << 12 | buf[9] << 8 | buf[10] << 4 | buf[11] ;
-			cap_data->bcdPDVersion = buf[4] << 12 | buf[5] << 8 | buf[6] << 4 | buf[7] ;
-			cap_data->bcdTypeCVersion = buf[0] << 12 | buf[1] << 8 | buf[2] << 4 | buf[3] ;
-
-        }
-    }
-	
+	if(fp_command > 0)
+	{
+		ret = write(fp_command,"6",sizeof("6"));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+			// Copy the entire buf into cap_data
+			memcpy(cap_data, buf, sizeof(*cap_data));
+		}
+	}
 	return ret;
 }
 
 static int libtypec_dbgfs_get_conn_capability_ops(int conn_num, struct libtypec_connector_cap_data *conn_cap_data)
 {
-    int ret=-1;
-	unsigned char buf[64];
-
+	int ret=-1;
+	unsigned char buf[64] = {0};
 
     if(fp_command > 0)
-    {
-		snprintf(buf, sizeof(buf), "%d", (conn_num+1)<<16|7);
-		
-        ret = write(fp_command,buf,sizeof(buf));
-	
-        if(ret)
-        {
-            ret = get_ucsi_response(buf);
-            if(ret<31)
-                ret = -1;
-			conn_cap_data->opr_mode = buf[28] << 12 | buf[29] <<8 | buf[30] << 4 | buf[31];	
+	{
+		snprintf(buf, sizeof(buf), "0x%x", (conn_num + 1) << 16 | 0x7);
+		ret = write(fp_command,buf,sizeof(buf));
+
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+			// Copy the entire buf into cap_data
+			memcpy(conn_cap_data, buf, sizeof(*conn_cap_data));
+		}
 	}
-    }
-    
-    return ret;
+	return ret;
 }
 static int libtypec_dbgfs_get_alternate_modes(int recipient, int conn_num, struct altmode_data *alt_mode_data)
 {
@@ -221,9 +257,9 @@ static int libtypec_dbgfs_get_alternate_modes(int recipient, int conn_num, struc
 			char num_am;
 		}s;
 	}am_cmd;
-
 	int ret=-1,i=0;
 	unsigned char buf[64];
+	unsigned short psvid = 0;
 
 	if(fp_command > 0)
 	{
@@ -235,32 +271,49 @@ static int libtypec_dbgfs_get_alternate_modes(int recipient, int conn_num, struc
 			am_cmd.s.con = conn_num+1;
 			am_cmd.s.offset = i;
 			am_cmd.s.num_am = 0;
-
 			snprintf(buf, sizeof(buf), "%lld", am_cmd.cmd_val);
-			
 			ret = write(fp_command,buf,sizeof(buf));
-
 			if(ret)
 			{
 				ret = get_ucsi_response(buf);
-				if(ret<31)
+				if(ret< 16)
 					return -1;
 				
-				alt_mode_data[i].svid 	 = buf[28] << 12 | buf[29] <<8 | buf[30] << 4 | buf[31];
-				alt_mode_data[i].vdo 	 = buf[24] << 12 | buf[25] <<8 | buf[26] << 4 | buf[27];	
-				
-				if(alt_mode_data[i].svid == 0)
+				alt_mode_data[i].svid 	 = buf[1] << 8 | buf[0];
+				alt_mode_data[i].vdo 	 = buf[5] << 24 | buf[4] << 16 | buf[3] << 8 | buf[2];
+
+				if(alt_mode_data[i].svid == 0 | alt_mode_data[i].svid == psvid)
 					break;
+				psvid = alt_mode_data[i].svid;
 			}
 			i++;
+
 		}while(1);
 
 	}
-	
 	return i;
 }
+static int libtypec_dbfs_get_current_cam_ops(int conn_num, struct libtypec_current_cam *cur_cam)
+{
+	int ret=-1;
+	unsigned char buf[64];
 
-static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, int *num_pdo, int src_snk, int type, unsigned int *pdo_data)
+	if(fp_command > 0)
+	{
+		snprintf(buf, sizeof(buf), "0x%x", (conn_num + 1) << 16 | 0x0E);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+			// Copy the entire buf into cap_data
+			memcpy(cur_cam, buf, ret);
+		}
+	}
+    return ret;
+}
+static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, int *num_pdo, int src_snk, int type, struct libtypec_get_pdos *pdo_data)
 {
 	union get_pdo_cmd
 	{
@@ -276,9 +329,9 @@ static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, in
 			unsigned int type	: 2;
 		}s;
 	}pdo_cmd;
-
 	int ret=-1,i=0;
 	unsigned char buf[64];
+	unsigned ppdo = 0;
 
 	if(fp_command > 0)
 	{
@@ -293,20 +346,18 @@ static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, in
 			pdo_cmd.s.src_snk = src_snk;
 			pdo_cmd.s.type = type;
 			
+			snprintf(buf, sizeof(buf), "0x%llx", pdo_cmd.cmd_val);
 
-			snprintf(buf, sizeof(buf), "%lld", pdo_cmd.cmd_val);
-			//printf("cmd %lld \n",pdo_cmd.cmd_val);
-			
 			ret = write(fp_command,buf,sizeof(buf));
-
 			if(ret)
 			{
 				ret = get_ucsi_response(buf);
-				if(ret<31)
+				if(ret< 16)
 					return -1;
-				pdo_data[i] = buf[24] << 28 | buf[25] << 24 | buf[26] << 20 | buf[27] << 16 | buf[28] << 12 | buf[29] <<8 | buf[30] << 4 | buf[31];					
-				if(pdo_data[i] == 0)
+				pdo_data->pdo[i] = buf[3] << 24 | buf[2] << 16 | buf[1] << 8 | buf[0];
+				if(pdo_data->pdo[i] == 0 | pdo_data->pdo[i] == ppdo)
 					break;
+				ppdo = pdo_data->pdo[i];
 			}
 			i++;
 		}while(1);
@@ -315,22 +366,128 @@ static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, in
 	
 	*num_pdo = i;
 	return i;
+}
+static int libtypec_dbgfs_get_cable_properties_ops(int conn_num, struct libtypec_cable_property *conn_cap)
+{
+	int ret=-1;
+	unsigned char buf[64];
+	if(fp_command > 0)
+	{
+		snprintf(buf, sizeof(buf), "0x%x", (conn_num + 1) << 16 | 0x11);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+			// Copy the entire buf into cap_data
+			memcpy(conn_cap, buf, ret);
+		}
+	}
+	return ret;
+}
+static int libtypec_dbgs_get_connector_status_ops(int conn_num, struct libtypec_connector_status *conn_sts)
+{
+	int ret=-1;
+	unsigned char buf[64];
 
+	if(fp_command > 0)
+	{
+		snprintf(buf, sizeof(buf), "0x%x", (conn_num + 1) << 16 | 0x12);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+			// Copy the entire buf into cap_data
+			memcpy(conn_sts, buf, ret);
+		}
+	}
+    return ret;
+}
+static int libtypec_dbgfs_set_uor_ops(unsigned char conn_num, unsigned char uor)
+{
+	int ret=-1;
+	unsigned char buf[64];
+	union set_uor_cmd
+	{
+		struct {
+			unsigned int cmd : 8;
+			unsigned int data_leng : 8;
+			unsigned int con_num : 7;
+			unsigned int uor_type : 3;
+		};
+		unsigned int uor_cmd;
+	}setuorcmd;
 
+	if(fp_command > 0)
+	{
+		setuorcmd.cmd = 0x09;
+		setuorcmd.data_leng = 0x00;
+		setuorcmd.con_num = conn_num + 1;
+		setuorcmd.uor_type = 0x4 | uor;
+
+		snprintf(buf, sizeof(buf), "0x%x", setuorcmd.uor_cmd);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+		}
+	}
+	return ret;
 }
 
+static int libtypec_dbgfs_set_pdr_ops(unsigned char conn_num, unsigned char pdr)
+{
+	int ret=-1;
+	unsigned char buf[64];
+	union set_pdr_cmd
+	{
+		struct {
+			unsigned int cmd : 8;
+			unsigned int data_leng : 8;
+			unsigned int con_num : 7;
+			unsigned int pdr_type : 3;
+		};
+		unsigned int pdr_cmd;
+	}setpdrcmd;
+
+	if(fp_command > 0)
+	{
+		setpdrcmd.cmd = 0x0B;
+		setpdrcmd.data_leng = 0x00;
+		setpdrcmd.con_num = conn_num + 1;
+		setpdrcmd.pdr_type = pdr;
+		snprintf(buf, sizeof(buf), "0x%x", setpdrcmd.pdr_cmd);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+		}
+	}
+    return ret;
+}
 const struct libtypec_os_backend libtypec_lnx_dbgfs_backend = {
 	.init = libtypec_dbgfs_init,
 	.exit = libtypec_dbgfs_exit,
+	.connector_reset = libtypec_dbgfs_connector_reset_ops,
 	.get_capability_ops = libtypec_dbgfs_get_capability_ops,
 	.get_conn_capability_ops = libtypec_dbgfs_get_conn_capability_ops,
 	.get_alternate_modes = libtypec_dbgfs_get_alternate_modes,
 	.get_cam_supported_ops = NULL,
-	.get_current_cam_ops = NULL,
+	.get_current_cam_ops = libtypec_dbfs_get_current_cam_ops,
 	.get_pdos_ops = libtypec_dbgfs_get_pdos_ops,
-	.get_cable_properties_ops = NULL,
-	.get_connector_status_ops = NULL,
+	.get_cable_properties_ops = libtypec_dbgfs_get_cable_properties_ops,
+	.get_connector_status_ops = libtypec_dbgs_get_connector_status_ops,
 	.get_pd_message_ops = NULL,
 	.get_bb_status = NULL,
 	.get_bb_data = NULL,
+	.get_lpm_ppm_info_ops = NULL,
+	.set_uor_ops = libtypec_dbgfs_set_uor_ops,
+	.set_pdr_ops = libtypec_dbgfs_set_pdr_ops,
 };

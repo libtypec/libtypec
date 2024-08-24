@@ -202,6 +202,52 @@ int libtypec_exit(void)
 }
 
 /**
+ * This function shall be used to set the connector reset
+ *
+ * \param conn_num connector number
+ * \param rst_type connector reset type
+ *
+ * \returns 0 on success
+ */
+int libtypec_connector_reset(int conn_num, int rst_type)
+{
+    if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->connector_reset)
+        return -EIO;
+
+    return cur_libtypec_os_backend->connector_reset(conn_num, rst_type);
+}
+
+/**
+ * This function shall be used to set the data operation role
+ *
+ * \param conn_num connector number
+ * \param  uor data operation role
+ * \returns 0 on success
+ */
+int libtypec_set_uor_ops(unsigned char conn_num, unsigned char uor)
+{
+    if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->set_uor_ops)
+        return -EIO;
+
+    return cur_libtypec_os_backend->set_uor_ops(conn_num, uor);
+}
+
+/**
+ * This function shall be used to set the power operation role
+ *
+ * \param  conn_num Data structure to hold platform capability
+ *
+ * \returns 0 on success
+ */
+int libtypec_set_pdr_ops(unsigned char conn_num, unsigned char pdr)
+{
+    if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->set_pdr_ops)
+        return -EIO;
+
+    return cur_libtypec_os_backend->set_pdr_ops(conn_num, pdr);
+}
+
+/**
  * This function shall be used to get the platform policy capabilities
  *
  * \param  cap_data Data structure to hold platform capability
@@ -282,6 +328,23 @@ int libtypec_get_connector_status(int conn_num, struct libtypec_connector_status
 }
 
 /**
+ * This function shall be used to get the Current cam of a connector
+ *
+ * \param conn_num connector number
+ * \param cur_cur data structure containing current cam
+ *
+ * \returns 0 on success
+ */
+
+int libtypec_get_current_cam(int conn_num, struct libtypec_current_cam *cur_cam)
+{
+    if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->get_current_cam_ops)
+        return -EIO;
+
+    return cur_libtypec_os_backend->get_current_cam_ops(conn_num, cur_cam);
+}
+
+/**
  * This function shall be used to get the USB PD response messages from
  *
  * \param  recipient Represents PD response message to be retrieved from local
@@ -320,7 +383,7 @@ int libtypec_get_pd_message(int recipient, int conn_num, int num_bytes, int resp
  * 
  * \returns PDO retrieved on success
  */
-int libtypec_get_pdos (int conn_num, int partner, int offset, int *num_pdo, int src_snk, int type, unsigned int *pdo_data)
+int libtypec_get_pdos (int conn_num, int partner, int offset, int *num_pdo, int src_snk, int type, struct libtypec_get_pdos *pdo_data)
 {
     if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->get_pdos_ops )
         return -EIO;

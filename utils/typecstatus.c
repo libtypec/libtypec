@@ -195,10 +195,10 @@ int typecstatus_power_contract()
             {
                 ret = libtypec_get_connector_status(i, &conn_sts);
 
-                if(conn_sts.rdo)
+                if(conn_sts.RequestDataObject)
                 {
 
-                    printf("\tUSB-C power contract Operating Power %ld W, with Max Power %ld W\n",(((conn_sts.rdo>>10)&0x3ff) * 250)/1000,((conn_sts.rdo&0x3ff) * 250)/1000);
+                    printf("\tUSB-C power contract Operating Power %d W, with Max Power %d W\n",(((conn_sts.RequestDataObject >>10)&0x3ff) * 250)/1000,((conn_sts.RequestDataObject &0x3ff) * 250)/1000);
 
                     tdp = get_dword_from_path("/sys/class/powercap/intel-rapl:0/constraint_0_power_limit_uw")/1000000;
 
