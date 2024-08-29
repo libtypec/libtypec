@@ -210,11 +210,13 @@ static int libtypec_dbgfs_get_capability_ops(struct libtypec_capability_data *ca
 	if(fp_command > 0)
 	{
 		ret = write(fp_command,"6",sizeof("6"));
+ 
 		if(ret)
 		{
 			ret = get_ucsi_response(buf);
 			if(ret < 16)
 				ret = -1;
+
 			// Copy the entire buf into cap_data
 			memcpy(cap_data, buf, sizeof(*cap_data));
 		}
@@ -245,6 +247,7 @@ static int libtypec_dbgfs_get_conn_capability_ops(int conn_num, struct libtypec_
 }
 static int libtypec_dbgfs_get_alternate_modes(int recipient, int conn_num, struct altmode_data *alt_mode_data)
 {
+
 	union get_am_cmd
 	{
 		unsigned long long cmd_val;
@@ -346,8 +349,7 @@ static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, in
 			pdo_cmd.s.src_snk = src_snk;
 			pdo_cmd.s.type = type;
 			
-			snprintf(buf, sizeof(buf), "0x%llx", pdo_cmd.cmd_val);
-
+			snprintf(buf, sizeof(buf), "0x%llx", pdo_cmd.cmd_val)
 			ret = write(fp_command,buf,sizeof(buf));
 			if(ret)
 			{
@@ -471,6 +473,7 @@ static int libtypec_dbgfs_set_pdr_ops(unsigned char conn_num, unsigned char pdr)
 		}
 	}
     return ret;
+}
 }
 const struct libtypec_os_backend libtypec_lnx_dbgfs_backend = {
 	.init = libtypec_dbgfs_init,

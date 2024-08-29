@@ -38,128 +38,123 @@ SOFTWARE.
 #include "libtypec_config.h"
 
 union optionalfeature {
-	struct
-	{
-		unsigned char setccomsupported : 1;
-		unsigned char setpowerlevelsupported : 1;
-		unsigned char altmodedetailssupported : 1;
-		unsigned char altmodeoverridesupported : 1;
-		unsigned char pdodetailssupported : 1;
-		unsigned char cabledetailssupported : 1;
-		unsigned char extsupplynotificationsupported : 1;
-		unsigned char pdresetnotificationsupported : 1;
-		unsigned char getpdmessagesupported : 1;
-		unsigned char getattentionvdosupported : 1;
-		unsigned char fwupdaterequestsupported : 1;
-		unsigned char negotiatedpowerlevelchangesupported : 1;
-		unsigned char securityrequestsupported : 1;
-		unsigned char setretimermodesupported : 1;
-		unsigned char chunkingsupportsupported : 1;
-		unsigned char reserved1 : 1;
-		unsigned char reserved2;
-	};
-	unsigned char raw_optfeas[3];
+    struct
+    {
+        unsigned char setccomsupported : 1;
+        unsigned char setpowerlevelsupported : 1;
+        unsigned char altmodedetailssupported : 1;
+        unsigned char altmodeoverridesupported : 1;
+        unsigned char pdodetailssupported : 1;
+        unsigned char cabledetailssupported : 1;
+        unsigned char extsupplynotificationsupported : 1;
+        unsigned char pdresetnotificationsupported : 1;
+        unsigned char getpdmessagesupported : 1;
+        unsigned char getattentionvdosupported : 1;
+        unsigned char fwupdaterequestsupported : 1;
+        unsigned char negotiatedpowerlevelchangesupported : 1;
+        unsigned char securityrequestsupported : 1;
+        unsigned char setretimermodesupported : 1;
+        unsigned char chunkingsupportsupported : 1;
+        unsigned char reserved1 : 1;
+        unsigned char reserved2;
+    };
+    unsigned char raw_optfeas[3];
 };
 union powersource {
-	struct
-	{
-		unsigned char acsupply : 1;
-		unsigned char reserved1 : 1;
-		unsigned char other : 1;
-		unsigned char reserved2 : 3;
-		unsigned char vbus : 1;
-		unsigned char reserved3 : 1;
-	};
-	unsigned char raw_powersrc;
+    struct
+    {
+        unsigned char acsupply : 1;
+        unsigned char reserved1 : 1;
+        unsigned char other : 1;
+        unsigned char reserved2 : 3;
+        unsigned char vbus : 1;
+        unsigned char reserved3 : 1;
+    };
+    unsigned char raw_powersrc;
 };
 
 union attributes {
-	struct {
-		unsigned int disabledstatesupport : 1;
-		unsigned int batterycharging : 1;
-		unsigned int usbpowerdelivery : 1;
-		unsigned int reserved1 : 3;
-		unsigned int usbtypeccurrent : 1;
-		unsigned int reserved2 : 1;
-		union powersource bmPowerSource;
-		unsigned int reserved3 : 16;
-	};
-	unsigned int raw_attrs;
+    struct {
+        unsigned int disabledstatesupport : 1;
+        unsigned int batterycharging : 1;
+        unsigned int usbpowerdelivery : 1;
+        unsigned int reserved1 : 3;
+        unsigned int usbtypeccurrent : 1;
+        unsigned int reserved2 : 1;
+        union powersource bmPowerSource;
+        unsigned int reserved3 : 16;
+    };
+    unsigned int raw_attrs;
 };
 
 struct libtypec_capability_data {
-	union attributes bmAttributes;
-	unsigned int bNumConnectors : 7;
-	unsigned int reserved1 : 1;
-	union optionalfeature bmOptionalFeatures;
-	unsigned int bNumAltModes : 8;
-	unsigned int reserved2 : 8;
-	unsigned int bcdBCVersion : 16;
-	unsigned int bcdPDVersion : 16;
-	unsigned int bcdTypeCVersion : 16;
-}__attribute__((packed));
+    union attributes bmAttributes;
+    unsigned int bNumConnectors : 7;
+    unsigned int reserved1 : 1;
+    union optionalfeature bmOptionalFeatures;
+    unsigned int bNumAltModes : 8;
+    unsigned int reserved2 : 8;
+    unsigned int bcdBCVersion : 16;
+    unsigned int bcdPDVersion : 16;
+    unsigned int bcdTypeCVersion : 16;
+};
 
 union operationmode {
-	struct
-	{
-		unsigned char rponly : 1;
-		unsigned char rdonly : 1;
-		unsigned char drp : 1;
-		unsigned char analogaudioaccessorymode : 1;
-		unsigned char debugaccessorymode : 1;
-		unsigned char usb2 : 1;
-		unsigned char usb3 : 1;
-		unsigned char alternatemode : 1;
-	};
-	unsigned char raw_operationmode;
+    struct
+    {
+        unsigned char rponly : 1;
+        unsigned char rdonly : 1;
+        unsigned char drp : 1;
+        unsigned char analogaudioaccessorymode : 1;
+        unsigned char debugaccessorymode : 1;
+        unsigned char usb2 : 1;
+        unsigned char usb3 : 1;
+        unsigned char alternatemode : 1;
+    };
+    unsigned char raw_operationmode;
 };
 
 union extendedoperationmode {
-	struct
-	{
-		unsigned char usb4gen2 : 1;
-		unsigned char eprsrc : 1;
-		unsigned char eprsnk : 1;
-		unsigned char usb4gen3 : 1;
-		unsigned char usb4gen4 : 1;
-		unsigned char reserved : 3;
-	};
-	unsigned char raw_extendedoperationmode;
+    struct
+    {
+        unsigned char usb4gen2 : 1;
+        unsigned char eprsrc : 1;
+        unsigned char eprsnk : 1;
+        unsigned char usb4gen3 : 1;
+        unsigned char usb4gen4 : 1;
+        unsigned char reserved : 3;
+    };
+    unsigned char raw_extendedoperationmode;
 };
 
 union miscellaneouscapabilities {
-	struct
-	{
-		unsigned char fwupdate : 1;
-		unsigned char security : 1;
-		unsigned char reserved : 2;
+    struct
+    {
+        unsigned char fwupdate : 1;
+        unsigned char security : 1;
+        unsigned char reserved : 2;
     };
-	unsigned char raw_miscellaneouscapabilities;
+    unsigned char raw_miscellaneouscapabilities;
 };
 struct libtypec_connector_cap_data
 {
-	union operationmode opr_mode;
-	unsigned int provider : 1;
-	unsigned int consumer : 1;
-	unsigned int swap2dfp : 1;
-	unsigned int swap2ufp : 1;
-	unsigned int swap2src : 1;
-	unsigned int swap2snk : 1;
-	unsigned int extended_operation_mode : 8;
-	unsigned int miscellaneous_capabilities : 4;
-	unsigned int reverse_current_protection_support : 1;
-	unsigned int partner_pd_rev : 2;
-	unsigned int reserved :3;
+    union operationmode opr_mode;
+    unsigned int provider : 1;
+    unsigned int consumer : 1;
+    unsigned int swap2dfp : 1;
+    unsigned int swap2ufp : 1;
+    unsigned int swap2src : 1;
+    unsigned int swap2snk : 1;
+    unsigned int extended_operation_mode : 8;
+    unsigned int miscellaneous_capabilities : 4;
+    unsigned int reverse_current_protection_support : 1;
+    unsigned int partner_pd_rev : 2;
+    unsigned int reserved :3;
 }__attribute__((packed));
-
-struct libtypec_current_cam
-{
-	unsigned char current_altmode[4];
-};
 
 struct libtypec_get_pdos
 {
-	unsigned int pdo[4];
+    unsigned int pdo[4];
 };
 struct altmode_data
 {
