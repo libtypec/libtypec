@@ -175,7 +175,7 @@ static short get_bcd_from_rev_file(char *path)
 		        fclose(fp);
 			return -1;
                 }
-		bcd = ((buf[0] - '0') << 8) | (buf[2] - '0');
+		bcd = ((buf[0] - '0') << 8) | ((buf[2] - '0') << 4);
 
 		fclose(fp);
 	}

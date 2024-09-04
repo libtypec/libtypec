@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/typecstatus.dir/typecstatus.c.o CMakeFiles/typecstatus.dir/names.c.o -o typecstatus  -Wl,-rpath,/home/sipilla/Documents/DEV/libtypec: ../libtypec.so.0.5.2 -ludev 

@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/lstypec.dir/lstypec.c.o CMakeFiles/lstypec.dir/names.c.o -o lstypec  -Wl,-rpath,/home/sipilla/Documents/DEV/libtypec: ../libtypec.so.0.5.2 -ludev 

@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC -O3 -DNDEBUG -shared -Wl,-soname,libtypec.so.5 -o libtypec.so.0.5.2 CMakeFiles/libtypec.dir/libtypec.c.o CMakeFiles/libtypec.dir/libtypec_sysfs_ops.c.o CMakeFiles/libtypec.dir/libtypec_dbgfs_ops.c.o 

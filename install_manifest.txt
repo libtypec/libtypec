@@ -1,0 +1,8 @@
+/usr/local/lib/libtypec.so.0.5.2
+/usr/local/lib/libtypec.so.5
+/usr/local/lib/libtypec.so
+/usr/local/include/libtypec.h
+/usr/local/include/libtypec_config.h
+/usr/local/bin/lstypec
+/usr/local/bin/typecstatus
+/usr/local/lib/pkgconfig/libtypec.pc

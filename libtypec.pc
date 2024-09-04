@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=/usr/local
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libtypec
+Description: Library to interface with USB Type-C and USB Power Delivery class devices
+Version: 0.5.2
+
+Requires:
+Libs: -L${libdir} -llibtypec
+Cflags: -I${includedir}
