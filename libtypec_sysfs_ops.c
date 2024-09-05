@@ -407,6 +407,9 @@ static unsigned int get_fixed_supply_pdo(char *path, int src_snk)
 	
 	unsigned int tmp;
 
+	memset(&fxd_src, 0, sizeof(fxd_src));
+	memset(&fxd_snk, 0, sizeof(fxd_snk));
+
 	if(src_snk)
 	{
 		fxd_src.obj_fixed_sply.type = 0;
