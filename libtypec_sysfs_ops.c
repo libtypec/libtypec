@@ -580,7 +580,7 @@ static int libtypec_sysfs_get_capability_ops(struct libtypec_capability_data *ca
 {
 	DIR *typec_path = opendir(SYSFS_TYPEC_PATH), *port_path;
 	struct dirent *typec_entry, *port_entry;
-	int num_ports = 0, num_alt_mode = 0;
+	int num_ports = 0, num_alt_mode = 0, num_port_alt = 0;
 	char path_str[512], port_content[512 + 64];
 
 	if (!typec_path)
@@ -600,15 +600,19 @@ static int libtypec_sysfs_get_capability_ops(struct libtypec_capability_data *ca
 
 			/*Scan the port capability*/
 			port_path = opendir(path_str);
+			num_port_alt = 0;
 
 			while ((port_entry = readdir(port_path)))
 			{
 
 				if (!(strncmp(port_entry->d_name, "port", 4)) && (strlen(port_entry->d_name) <= MAX_PORT_MODE_STR))
 				{
-					num_alt_mode++;
+					num_port_alt++;
 				}
 			}
+			/*Counting different alt modes supported by the PPM*/
+			if(num_alt_mode < num_port_alt)
+				num_alt_mode = num_port_alt;
 
 			snprintf(port_content, sizeof(port_content), "%s/%s", path_str, "usb_power_delivery_revision");
 
