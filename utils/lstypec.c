@@ -842,7 +842,7 @@ void print_capabilities_port(int i)
     ret = libtypec_get_pdos(i, 0, 0, &num_pdos, 0, 0, pdo_data);
     if (ret > 0) {
       printf("  Connector PDO Data (Sink):\n");
-      print_source_pdo_data(pdo_data, num_pdos, get_cap_data.bcdPDVersion);
+      print_sink_pdo_data(pdo_data, num_pdos, get_cap_data.bcdPDVersion);
     }
     else
         printf("  Connector PDO Data (Source) returned : %d\n", ret);

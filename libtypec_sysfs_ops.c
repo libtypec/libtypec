@@ -312,7 +312,7 @@ static unsigned int get_variable_supply_pdo(char *path, int src_snk)
 	union libtypec_variable_supply_src var_src;
 	unsigned int tmp;
 
-	var_src.obj_var_sply.type = 1;
+	var_src.obj_var_sply.type = PDO_VARIABLE;
 	
 	snprintf(port_content, sizeof(port_content), "%s/%s", path, "maximum_voltage");
 	tmp = get_dword_from_path(port_content);
@@ -421,7 +421,7 @@ static unsigned int get_fixed_supply_pdo(char *path, int src_snk)
 		fxd_src.obj_fixed_sply.usb_suspend = get_dword_from_path(port_content);
 		
 		snprintf(port_content, sizeof(port_content), "%s/%s", path, "unconstrained_power");
-		fxd_src.obj_fixed_sply.uncons_pwr = get_dword_from_path(path);
+		fxd_src.obj_fixed_sply.uncons_pwr = get_dword_from_path(port_content);
 		
 		snprintf(port_content, sizeof(port_content), "%s/%s", path, "usb_communication_capable");
 		fxd_src.obj_fixed_sply.usb_comm = get_dword_from_path(port_content);
@@ -452,9 +452,12 @@ static unsigned int get_fixed_supply_pdo(char *path, int src_snk)
 		
 		snprintf(port_content, sizeof(port_content), "%s/%s", path, "dual_role_power");
 		fxd_snk.obj_fixed_supply.drp = get_dword_from_path(port_content);
+
+		snprintf(port_content, sizeof(port_content), "%s/%s", path, "higher_capability");
+		fxd_snk.obj_fixed_supply.higher_caps = get_dword_from_path(port_content);
 		
 		snprintf(port_content, sizeof(port_content), "%s/%s", path, "unconstrained_power");
-		fxd_snk.obj_fixed_supply.uncons_pwr = get_dword_from_path(path);
+		fxd_snk.obj_fixed_supply.uncons_pwr = get_dword_from_path(port_content);
 		
 		snprintf(port_content, sizeof(port_content), "%s/%s", path, "usb_communication_capable");
 		fxd_snk.obj_fixed_supply.usb_comm_cap = get_dword_from_path(port_content);
