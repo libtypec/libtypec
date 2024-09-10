@@ -53,6 +53,8 @@ struct libtypec_os_backend
 
     int (*exit)(void);
 
+    int (*connector_reset)(int conn_num, int rst_type);
+
     int (*get_capability_ops)(struct libtypec_capability_data *cap_data);
 
     int (*get_conn_capability_ops)(int conn_num, struct libtypec_connector_cap_data *conn_cap_data);
@@ -61,7 +63,7 @@ struct libtypec_os_backend
 
     int (*get_cam_supported_ops)(int conn_num, char *cam_data);
 
-    int (*get_current_cam_ops)(char *cur_cam_data);
+    int (*get_current_cam_ops)(int conn_num, struct libtypec_current_cam *cur_cam);
 
     int (*get_pdos_ops)(int conn_num, int partner, int offset, int *num_pdo, int src_snk, int type, struct libtypec_get_pdos *pdo_data);
 
@@ -76,6 +78,12 @@ struct libtypec_os_backend
     int (*get_bb_data)(int num_billboards,char* bb_data);
 
     void (*monitor_events)(void);
+
+	int (*get_lpm_ppm_info_ops)(void);
+
+    int (*set_uor_ops)(unsigned char conn_num, unsigned char uor);
+
+    int (*set_pdr_ops)(unsigned char conn_num, unsigned char pdr);
 };
 
 #endif /*LIBTYPEC_OPS_H*/

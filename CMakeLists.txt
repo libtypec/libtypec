@@ -45,7 +45,7 @@ set_target_properties(libtypec PROPERTIES
 add_subdirectory(utils)
 
 
-install(TARGETS libtypec lstypec typecstatus
+install(TARGETS libtypec lstypec typecstatus ucsicontrol
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     RUNTIME     DESTINATION bin
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")

@@ -158,6 +158,40 @@ static int libtypec_dbgfs_init(char **session_info)
 		return -EIO;
 	}
 }
+static int libtypec_dbgfs_connector_reset_ops(int conn_num, int rst_type)
+{
+	int ret=-1;
+	unsigned char buf[64];
+	union conn_rst_cmd
+	{
+		struct {
+			unsigned int cmd : 8;
+			unsigned int data_leng : 8;
+			unsigned int con_num : 7;
+			unsigned int rst_type : 1;
+		};
+		unsigned int rst_cmd;
+	}rstcmd;
+
+	if(fp_command > 0)
+	{
+		rstcmd.cmd = 0x03;
+		rstcmd.data_leng = 0x00;
+		rstcmd.con_num = conn_num + 1;
+		rstcmd.rst_type = rst_type;
+
+		snprintf(buf, sizeof(buf), "0x%x", rstcmd.rst_cmd);
+		ret = write(fp_command,buf,sizeof(buf));
+
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+		}
+	}
+	return ret;
+}
 
 static int libtypec_dbgfs_exit(void)
 {
@@ -187,7 +221,6 @@ static int libtypec_dbgfs_get_capability_ops(struct libtypec_capability_data *ca
 			memcpy(cap_data, buf, sizeof(*cap_data));
 		}
 	}
-
 	return ret;
 }
 
@@ -227,7 +260,6 @@ static int libtypec_dbgfs_get_alternate_modes(int recipient, int conn_num, struc
 			char num_am;
 		}s;
 	}am_cmd;
-
 	int ret=-1,i=0;
 	unsigned char buf[64];
 	unsigned short psvid = 0;
@@ -242,11 +274,8 @@ static int libtypec_dbgfs_get_alternate_modes(int recipient, int conn_num, struc
 			am_cmd.s.con = conn_num+1;
 			am_cmd.s.offset = i;
 			am_cmd.s.num_am = 0;
-
 			snprintf(buf, sizeof(buf), "%lld", am_cmd.cmd_val);
-
 			ret = write(fp_command,buf,sizeof(buf));
-
 			if(ret)
 			{
 				ret = get_ucsi_response(buf);
@@ -265,8 +294,27 @@ static int libtypec_dbgfs_get_alternate_modes(int recipient, int conn_num, struc
 		}while(1);
 
 	}
-	
 	return i;
+}
+static int libtypec_dbfs_get_current_cam_ops(int conn_num, struct libtypec_current_cam *cur_cam)
+{
+	int ret=-1;
+	unsigned char buf[64];
+
+	if(fp_command > 0)
+	{
+		snprintf(buf, sizeof(buf), "0x%x", (conn_num + 1) << 16 | 0x0E);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+			// Copy the entire buf into cap_data
+			memcpy(cur_cam, buf, ret);
+		}
+	}
+    return ret;
 }
 static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, int *num_pdo, int src_snk, int type, struct libtypec_get_pdos *pdo_data)
 {
@@ -284,7 +332,6 @@ static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, in
 			unsigned int type	: 2;
 		}s;
 	}pdo_cmd;
-
 	int ret=-1,i=0;
 	unsigned char buf[64];
 	unsigned ppdo = 0;
@@ -302,9 +349,7 @@ static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, in
 			pdo_cmd.s.src_snk = src_snk;
 			pdo_cmd.s.type = type;
 			
-
-			snprintf(buf, sizeof(buf), "0x%llx", pdo_cmd.cmd_val);
-
+			snprintf(buf, sizeof(buf), "0x%llx", pdo_cmd.cmd_val)
 			ret = write(fp_command,buf,sizeof(buf));
 			if(ret)
 			{
@@ -324,18 +369,128 @@ static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, in
 	*num_pdo = i;
 	return i;
 }
+static int libtypec_dbgfs_get_cable_properties_ops(int conn_num, struct libtypec_cable_property *conn_cap)
+{
+	int ret=-1;
+	unsigned char buf[64];
+	if(fp_command > 0)
+	{
+		snprintf(buf, sizeof(buf), "0x%x", (conn_num + 1) << 16 | 0x11);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+			// Copy the entire buf into cap_data
+			memcpy(conn_cap, buf, ret);
+		}
+	}
+	return ret;
+}
+static int libtypec_dbgs_get_connector_status_ops(int conn_num, struct libtypec_connector_status *conn_sts)
+{
+	int ret=-1;
+	unsigned char buf[64];
+
+	if(fp_command > 0)
+	{
+		snprintf(buf, sizeof(buf), "0x%x", (conn_num + 1) << 16 | 0x12);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+			// Copy the entire buf into cap_data
+			memcpy(conn_sts, buf, ret);
+		}
+	}
+    return ret;
+}
+static int libtypec_dbgfs_set_uor_ops(unsigned char conn_num, unsigned char uor)
+{
+	int ret=-1;
+	unsigned char buf[64];
+	union set_uor_cmd
+	{
+		struct {
+			unsigned int cmd : 8;
+			unsigned int data_leng : 8;
+			unsigned int con_num : 7;
+			unsigned int uor_type : 3;
+		};
+		unsigned int uor_cmd;
+	}setuorcmd;
+
+	if(fp_command > 0)
+	{
+		setuorcmd.cmd = 0x09;
+		setuorcmd.data_leng = 0x00;
+		setuorcmd.con_num = conn_num + 1;
+		setuorcmd.uor_type = 0x4 | uor;
+
+		snprintf(buf, sizeof(buf), "0x%x", setuorcmd.uor_cmd);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+		}
+	}
+	return ret;
+}
+
+static int libtypec_dbgfs_set_pdr_ops(unsigned char conn_num, unsigned char pdr)
+{
+	int ret=-1;
+	unsigned char buf[64];
+	union set_pdr_cmd
+	{
+		struct {
+			unsigned int cmd : 8;
+			unsigned int data_leng : 8;
+			unsigned int con_num : 7;
+			unsigned int pdr_type : 3;
+		};
+		unsigned int pdr_cmd;
+	}setpdrcmd;
+
+	if(fp_command > 0)
+	{
+		setpdrcmd.cmd = 0x0B;
+		setpdrcmd.data_leng = 0x00;
+		setpdrcmd.con_num = conn_num + 1;
+		setpdrcmd.pdr_type = pdr;
+		snprintf(buf, sizeof(buf), "0x%x", setpdrcmd.pdr_cmd);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+		}
+	}
+    return ret;
+}
+}
 const struct libtypec_os_backend libtypec_lnx_dbgfs_backend = {
 	.init = libtypec_dbgfs_init,
 	.exit = libtypec_dbgfs_exit,
+	.connector_reset = libtypec_dbgfs_connector_reset_ops,
 	.get_capability_ops = libtypec_dbgfs_get_capability_ops,
 	.get_conn_capability_ops = libtypec_dbgfs_get_conn_capability_ops,
 	.get_alternate_modes = libtypec_dbgfs_get_alternate_modes,
 	.get_cam_supported_ops = NULL,
-	.get_current_cam_ops = NULL,
+	.get_current_cam_ops = libtypec_dbfs_get_current_cam_ops,
 	.get_pdos_ops = libtypec_dbgfs_get_pdos_ops,
-	.get_cable_properties_ops = NULL,
-	.get_connector_status_ops = NULL,
+	.get_cable_properties_ops = libtypec_dbgfs_get_cable_properties_ops,
+	.get_connector_status_ops = libtypec_dbgs_get_connector_status_ops,
 	.get_pd_message_ops = NULL,
 	.get_bb_status = NULL,
 	.get_bb_data = NULL,
+	.get_lpm_ppm_info_ops = NULL,
+	.set_uor_ops = libtypec_dbgfs_set_uor_ops,
+	.set_pdr_ops = libtypec_dbgfs_set_pdr_ops,
 };

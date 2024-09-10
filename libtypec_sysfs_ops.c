@@ -823,7 +823,7 @@ static int libtypec_sysfs_get_connector_status_ops(int conn_num, struct libtypec
 
 	snprintf(path_str, sizeof(path_str), SYSFS_TYPEC_PATH "/port%d/port%d-partner", conn_num, conn_num);
 
-	conn_sts->connect_sts = (lstat(path_str, &sb) == -1) ? 0 : 1;
+	conn_sts->ConnectStatus = (lstat(path_str, &sb) == -1) ? 0 : 1;
 
 	snprintf(path_str, sizeof(path_str), SYSFS_PSY_PATH "/ucsi-source-psy-USBC000:00%d", conn_num + 1);
 
@@ -862,7 +862,7 @@ static int libtypec_sysfs_get_connector_status_ops(int conn_num, struct libtypec
 
 			max_mw = (cur * volt) / (250 * 1000);
 
-			conn_sts->rdo = ((op_mw << 10)) | (max_mw)&0x3FF;
+			conn_sts->RequestDataObject = ((op_mw << 10)) | (max_mw)&0x3FF;
 		}
 	}
 	return 0;

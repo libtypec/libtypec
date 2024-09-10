@@ -158,118 +158,196 @@ struct libtypec_get_pdos
 };
 struct altmode_data
 {
-    uint32_t svid;
-    uint32_t vdo;
+	uint16_t svid;
+	uint32_t vdo;
 };
 
 union libtypec_discovered_identity
 {
-    char buf_disc_id[24];
-    struct discovered_identity
-    {
-        uint32_t cert_stat;
-        uint32_t id_header;
-        uint32_t product;
-        uint32_t product_type_vdo1;
-        uint32_t product_type_vdo2;
-        uint32_t product_type_vdo3;
-    } disc_id;
+	char buf_disc_id[24];
+	struct discovered_identity
+	{
+		uint32_t cert_stat;
+		uint32_t id_header;
+		uint32_t product;
+		uint32_t product_type_vdo1;
+		uint32_t product_type_vdo2;
+		uint32_t product_type_vdo3;
+	} disc_id;
 };
+
+union connectorstatuschange
+{
+	struct {
+		unsigned char reserved1 : 1;
+		unsigned char ExternalSupplyChange : 1;
+		unsigned char PowerOperationModechange : 1;
+		unsigned char Attention : 1;
+		unsigned char Reserved2 : 1;
+		unsigned char SupportedProviderCapabilitiesChange : 1;
+		unsigned char NegotiatedPowerLevelChange : 1;
+		unsigned char PDResetComplete : 1;
+		unsigned char SupportedCAMChange : 1;
+		unsigned char BatteryChargingStatusChange : 1;
+		unsigned char Reserved3 : 1;
+		unsigned char ConnectorPartnerChanged : 1;
+		unsigned char PowerDirectionChanged : 1;
+		unsigned char SinkPathStatusChange : 1;
+		unsigned char ConnectChange : 1;
+		unsigned char Error : 1;
+	};
+	unsigned short int raw_conn_stschang;
+};
+
+enum power_operation_mode {
+	/** USB_DEFAULT_OPERATION */
+	USB_DEFAULT_OPERATION = 1,
+	/** BC_OPERATION */
+	BC_OPERATION = 2,
+	/** PD_OPERATION */
+	PD_OPERATION = 3,
+	/** USB_TC_CURRENT_1_5A */
+	USB_TC_CURRENT_1_5A = 4,
+	/** USB_TC_CURRENT_3A */
+	USB_TC_CURRENT_3A = 5,
+	/** USB_TC_CURRENT_5A */
+	USB_TC_CURRENT_5A = 6,
+};
+
+union connectorpartnerflags {
+	struct  {
+		unsigned char usb : 1;
+		unsigned char altmode : 1;
+		unsigned char usb4_gen3 : 1;
+		unsigned char usb4_gen4 : 1;
+		unsigned char reserved : 4;
+	};
+	unsigned char raw_conn_part_flags;
+};
+
+enum conn_partner_type {
+	/** DFP_ATTACHED */
+	DFP_ATTACHED = 1,
+	/** UFP_ATTACHED */
+	UFP_ATTACHED = 2,
+	/** POWERED_CABLE_NO_UFP_ATTACHED */
+	POWERED_CABLE_NO_UFP_ATTACHED = 3,
+	/** POWERED_CABLE_UFP_ATTACHED */
+	POWERED_CABLE_UFP_ATTACHED = 4,
+	/** DEBUG_ACCESSORY_ATTACHED */
+	DEBUG_ACCESSORY_ATTACHED = 5,
+	/** AUDIO_ADAPTER_ACCESSORY_ATTACHED */
+	AUDIO_ADAPTER_ACCESSORY_ATTACHED = 6,
+};
+
 
 struct libtypec_connector_status
 {
-    unsigned sts_change : 16;
-    unsigned pwr_op_mode : 3;
-    unsigned connect_sts : 1;
-    unsigned pwr_dir : 1;
-    unsigned ptnr_flags : 8;
-    unsigned ptnr_type : 3;
-    unsigned long rdo;
-    unsigned bat_chrg_cap_sts : 2;
-    unsigned cap_ltd_reason : 4;
-    unsigned bcdPDVer_op_mode : 16;
-    unsigned reserved_1 : 10;
-    unsigned reserved_2;
-};
+	union connectorstatuschange ConnectorStatusChange;
+	unsigned int PowerOperationMode : 3;
+	unsigned int ConnectStatus : 1;
+	unsigned int PowerDirection : 1;
+	unsigned int ConnectorPartnerFlags :8;
+	unsigned int ConnectorPartnerType : 3;
+	unsigned int RequestDataObject : 32;
+	unsigned int BatteryChargingCapabilityStatus : 2;
+	unsigned int ProviderCapabilitiesLimitedReason : 4;
+	unsigned int bcdPDVersionOperationMode : 16;
+	unsigned int Orientation : 1;
+	unsigned int SinkPathStatus : 1;
+	unsigned int ReverseCurrentProtectionStatus : 1;
+	unsigned int PowerReadingReady : 1;
+	unsigned int CurrentScale : 3;
+	unsigned int PeakCurrent : 16;
+	unsigned int AverageCurrent : 16;
+	unsigned int VoltageScale : 4;
+	unsigned int VoltageReading : 16;
+	unsigned int Reserved : 7;
+}__attribute__((packed));
 
 struct libtypec_cable_property
 {
-    unsigned short speed_supported;
-    unsigned char current_capability;
-    unsigned vbus_support : 1;
-    unsigned char cable_type;
-    unsigned directionality : 1;
-    unsigned char plug_end_type;
-    unsigned mode_support : 1;
-    unsigned reserved_1 : 2;
-    unsigned latency : 4;
-    unsigned reserved_2 : 4;
+	unsigned short speed_supported;
+	unsigned int current_capability : 8;
+	unsigned int vbus_support : 1;
+	unsigned int cable_type : 1;
+	unsigned int directionality : 1;
+	unsigned int plug_end_type : 2 ;
+	unsigned int mode_support : 1;
+	unsigned int cable_pd_revision : 2;
+	unsigned int latency : 4;
+	unsigned int reserved : 28;
+}__attribute__((packed));
+
+struct libtypec_get_lpm_ppm_info
+{
+	unsigned short vid;
+	unsigned short pid;
+	unsigned int xid;
+	unsigned int fw_version_upper;
+	unsigned int fw_version_lower;
+	unsigned int hw_version;
 };
 
 union libtypec_fixed_supply_src
 {
-    unsigned fixed_supply;
-    struct fixed_supply_bits
-    {
-        unsigned max_cur:10;
-        unsigned volt:10;
-        unsigned peak_cur:2;
-        unsigned rsvd:1;
-        unsigned epr:1;
-        unsigned unchunked:1;
-        unsigned drd:1;
-        unsigned usb_comm:1;
-        unsigned uncons_pwr:1;
-        unsigned usb_suspend:1;
-        unsigned dual_pwr:1;
-        unsigned type:2;
-    }obj_fixed_sply;
-    
+	unsigned fixed_supply;
+	struct fixed_supply_bits
+	{
+		unsigned max_cur:10;
+		unsigned volt:10;
+		unsigned peak_cur:2;
+		unsigned rsvd:1;
+		unsigned epr:1;
+		unsigned unchunked:1;
+		unsigned drd:1;
+		unsigned usb_comm:1;
+		unsigned uncons_pwr:1;
+		unsigned usb_suspend:1;
+		unsigned dual_pwr:1;
+		unsigned type:2;
+	}obj_fixed_sply;
 };
 
 union libtypec_variable_supply_src
 {
-    unsigned int variable_supply;
-    struct variable_supply_bits
-    {
-        unsigned max_cur:10;
-        unsigned min_volt:10;
+	unsigned int variable_supply;
+	struct variable_supply_bits
+	{
+		unsigned max_cur:10;
+		unsigned min_volt:10;
         unsigned max_volt:10;
-        unsigned type:2;
-        
+		unsigned type:2;
     }obj_var_sply;
-    
 };
 
 union libtypec_battery_supply_src
 {
-    unsigned int battery_supply;
-    struct battery_supply_bits
-    {
-        unsigned max_pwr:10;
-        unsigned min_volt:10;
-        unsigned max_volt:10;
-        unsigned type:2;
-    }obj_bat_sply;
-    
+	unsigned int battery_supply;
+	struct battery_supply_bits
+	{
+		unsigned max_pwr:10;
+		unsigned min_volt:10;
+		unsigned max_volt:10;
+		unsigned type:2;
+	}obj_bat_sply;
 };
 
 union libtypec_pps_src
 {
-    unsigned int spr_pps_supply;
-    struct pps_supply_bits
-    {
-        unsigned max_cur:7;
-        unsigned rsvd1:1;
-        unsigned min_volt:8;
-        unsigned rsvd2:1;
-        unsigned max_volt:8;
-        unsigned rsvd3:2;
-        unsigned pwr_ltd:1;
-        unsigned pps_type:2;
-        unsigned type:2;
-    }obj_pps_sply;
-    
+	unsigned int spr_pps_supply;
+	struct pps_supply_bits
+	{
+		unsigned max_cur:7;
+		unsigned rsvd1:1;
+		unsigned min_volt:8;
+		unsigned rsvd2:1;
+		unsigned max_volt:8;
+		unsigned rsvd3:2;
+		unsigned pwr_ltd:1;
+		unsigned pps_type:2;
+		unsigned type:2;
+	}obj_pps_sply;
 };
 
 union libtypec_fixed_supply_snk
@@ -401,11 +479,12 @@ int libtypec_exit(void);
  * @brief
  *
  */
+int libtypec_connector_reset(int conn_num, int rst_type);
 int libtypec_get_capability(struct libtypec_capability_data *cap_data);
 int libtypec_get_conn_capability(int conn_num, struct libtypec_connector_cap_data *conn_cap_data);
 int libtypec_get_alternate_modes(int recipient, int conn_num, struct altmode_data *alt_mode_data);
 int libtypec_get_cam_supported(int conn_num, char *cam_data);
-int libtypec_get_current_cam(char *cur_cam_data);
+int libtypec_get_current_cam(int conn_num, struct libtypec_current_cam *cur_cam);
 int libtypec_get_pdos(int conn_num, int partner, int offset, int *num_pdo, int src_snk, int type, struct libtypec_get_pdos *pdo_data);
 int libtypec_get_cable_properties(int conn_num, struct libtypec_cable_property *cbl_prop_data);
 int libtypec_get_connector_status(int conn_num, struct libtypec_connector_status *conn_sts);
@@ -413,6 +492,8 @@ int libtypec_get_pd_message(int recipient, int conn_num, int num_bytes, int resp
 
 int libtypec_get_bb_status(unsigned int *num_bb_instance);
 int libtypec_get_bb_data(int num_billboards,char* bb_data);
+int libtypec_set_uor_ops(unsigned char conn_num, unsigned char uor);
+int libtypec_set_pdr_ops(unsigned char conn_num, unsigned char pdr);
 
 int libtypec_register_typec_notification_callback(enum usb_typec_event event, usb_typec_callback_t cb, void* data);
 int libtypec_unregister_typec_notification_callback(enum usb_typec_event event, usb_typec_callback_t cb);
