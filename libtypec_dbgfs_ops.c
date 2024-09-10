@@ -349,7 +349,7 @@ static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, in
 			pdo_cmd.s.src_snk = src_snk;
 			pdo_cmd.s.type = type;
 			
-			snprintf(buf, sizeof(buf), "0x%llx", pdo_cmd.cmd_val)
+			snprintf(buf, sizeof(buf), "0x%llx", pdo_cmd.cmd_val);
 			ret = write(fp_command,buf,sizeof(buf));
 			if(ret)
 			{
@@ -473,7 +473,6 @@ static int libtypec_dbgfs_set_pdr_ops(unsigned char conn_num, unsigned char pdr)
 		}
 	}
     return ret;
-}
 }
 const struct libtypec_os_backend libtypec_lnx_dbgfs_backend = {
 	.init = libtypec_dbgfs_init,
