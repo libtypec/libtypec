@@ -152,6 +152,11 @@ struct libtypec_connector_cap_data
     unsigned int reserved :3;
 }__attribute__((packed));
 
+struct libtypec_current_cam
+{
+	unsigned char current_altmode[4];
+};
+
 struct libtypec_get_pdos
 {
     unsigned int pdo[4];
