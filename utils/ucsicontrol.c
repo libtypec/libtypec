@@ -38,7 +38,7 @@ struct libtypec_current_cam cur_cam;
 struct libtypec_connector_status conn_sts;
 struct libtypec_cable_property cable_prop;
 union libtypec_discovered_identity id;
-struct libtypec_get_pdos pdo_data;
+struct libtypec_get_pdos pdo_data_val;
 struct altmode_data alt_mode_data[64];
 char *session_info[LIBTYPEC_SESSION_MAX_INDEX];
 
@@ -506,8 +506,8 @@ int main(int argc, char *argv[])
                     printf("Invalid connector number: %s\n", optarg);
                     return -1;
                 }
-                ret = libtypec_get_pdos(conn_num, partner, offset, &num_pdo, src_snk, type, &pdo_data);
-                print_get_pdos(num_pdo, &pdo_data);
+                ret = libtypec_get_pdos(conn_num, partner, offset, &num_pdo, src_snk, type, &pdo_data_val);
+                print_get_pdos(num_pdo, &pdo_data_val);
                 return 0;
             case 'o':
                 conn_num = atoi(optarg);

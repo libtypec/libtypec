@@ -1336,6 +1336,7 @@ struct libtypec_connector_cap_data conn_data;
 struct libtypec_connector_status conn_sts;
 struct libtypec_cable_property cable_prop;
 union libtypec_discovered_identity id;
+struct libtypec_get_pdos *pdo_data;
 
 struct altmode_data am_data[64];
 char *session_info[LIBTYPEC_SESSION_MAX_INDEX];
