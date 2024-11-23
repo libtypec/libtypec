@@ -1,6 +1,6 @@
 project('libtypec_utils','c',
 license: 'MIT',
-version: '0.5.1',
+version: '0.6.0',
 default_options : [
 	'warning_level=0'])
 
@@ -22,6 +22,7 @@ dep = declare_dependency(
 )
 
 udev_dep = meson.get_compiler('c').find_library('udev')
+gtk3_dep = dependency('gtk+-3.0')
 
 executable(
 	'lstypec',
@@ -35,6 +36,22 @@ executable(
 	'typecstatus',
 	'typecstatus.c', 'names.c',
 	dependencies: [dep, udev_dep],
+	include_directories: inc_dir,
+	install: true,
+	install_dir: get_option('bindir')
+)
+executable(
+	'ucsicontrol',
+	'ucsicontrol.c', 'names.c',
+	dependencies: [dep, udev_dep],
+	include_directories: inc_dir,
+	install: true,
+	install_dir: get_option('bindir')
+)
+executable(
+	'usbcview',
+	'usbcview.c', 'names.c',
+	dependencies: [dep, gtk3_dep,udev_dep],
 	include_directories: inc_dir,
 	install: true,
 	install_dir: get_option('bindir')
