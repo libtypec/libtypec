@@ -294,6 +294,36 @@ struct libtypec_get_lpm_ppm_info
 	unsigned int hw_version;
 };
 
+struct libtypec_get_error_status {
+	struct error_information {
+		unsigned short unrecognized_command : 1;
+		unsigned short nonexistent_connector_number : 1;
+		unsigned short invalid_cmd_specific_params : 1;
+		unsigned short incompatible_connector_partner : 1;
+		unsigned short cc_comm_error : 1;
+		unsigned short cmd_unsuccessful_dead_battery : 1;
+		unsigned short contract_negotiation_failure : 1;
+		unsigned short overcurrent : 1;
+		unsigned short undefined : 1;
+		unsigned short port_partner_reject_swap : 1;
+		unsigned short hard_reset : 1;
+		unsigned short ppm_policy_conflict : 1;
+		unsigned short swap_rejected : 1;
+		unsigned short reverse_current_protection : 1;
+		unsigned short set_sink_path_rejected : 1;
+		unsigned short reserved : 1;
+	} error_info;
+	unsigned short vendor_defined;
+} __attribute__((packed));
+
+struct libtypec_get_cam_cs
+{
+	unsigned char cam;
+	unsigned int sts;
+	unsigned char num_vdo;
+	unsigned int vdo;
+};
+
 union libtypec_fixed_supply_src
 {
 	unsigned fixed_supply;
@@ -497,8 +527,13 @@ int libtypec_get_pd_message(int recipient, int conn_num, int num_bytes, int resp
 
 int libtypec_get_bb_status(unsigned int *num_bb_instance);
 int libtypec_get_bb_data(int num_billboards,char* bb_data);
-int libtypec_set_uor_ops(unsigned char conn_num, unsigned char uor);
-int libtypec_set_pdr_ops(unsigned char conn_num, unsigned char pdr);
+int libtypec_set_uor(unsigned char conn_num, unsigned char uor);
+int libtypec_set_pdr(unsigned char conn_num, unsigned char pdr);
+int libtypec_set_ccom(unsigned char conn_num, unsigned char ccom);
+int libtypec_get_lpm_ppm_info(unsigned char conn_num, struct libtypec_get_lpm_ppm_info *lpm_ppm_info);
+int libtypec_get_error_status(unsigned char conn_num, struct libtypec_get_error_status *error_status);
+int libtypec_set_new_cam(unsigned char conn_num, unsigned char entry_exit, unsigned char new_cam, unsigned int am_spec);
+int libtypec_get_cam_cs(unsigned char conn_num, unsigned char cam, struct libtypec_get_cam_cs *cam_cs);
 
 int libtypec_register_typec_notification_callback(enum usb_typec_event event, usb_typec_callback_t cb, void* data);
 int libtypec_unregister_typec_notification_callback(enum usb_typec_event event, usb_typec_callback_t cb);

@@ -40,8 +40,10 @@ struct libtypec_cable_property cable_prop;
 union libtypec_discovered_identity id;
 struct libtypec_get_pdos pdo_data_val;
 struct altmode_data alt_mode_data[64];
+struct libtypec_get_lpm_ppm_info lpm_ppm_info;
+struct libtypec_get_error_status error_status;
+struct libtypec_get_cam_cs cam_cs;
 char *session_info[LIBTYPEC_SESSION_MAX_INDEX];
-
 
 void hex_to_decimal(unsigned int version)
 {
@@ -344,6 +346,95 @@ void print_get_pdos(unsigned char num_pdo, struct libtypec_get_pdos *pdo_data)
     }
 
 }
+/**
+ * Prints the USB-C Platform Policy Manager lpm and ppm info.
+ *
+ * @param
+ *  get_lpm_ppm_info The structure containing the lpm ppm info.
+ */
+void print_get_lpm_ppm_info(struct libtypec_get_lpm_ppm_info *lpm_ppm_info)
+{
+	printf("UCSI MESSAGE_IN:\n");
+	printf("==================\n");
+	for (int i = 0; i < sizeof(*lpm_ppm_info); i++) {
+		printf("%02x ", ((unsigned char*)lpm_ppm_info)[i]);
+		if ((i + 1) % 8 == 0) {
+			printf("\n");
+		}
+	}
+
+	printf("\n\nGET_LPM_PPM_INFO :\n");
+	printf("-------------------------\n");
+    printf("VID: 0x%x\n", lpm_ppm_info->vid);
+    printf("PID: 0x%x\n", lpm_ppm_info->pid);
+    printf("XID: 0x%x\n", lpm_ppm_info->xid);
+    printf("FWVersionUpper: 0x%x\n", lpm_ppm_info->fw_version_upper);
+    printf("FWVersionLower: 0x%x\n", lpm_ppm_info->fw_version_lower);
+    printf("HWVersion: 0x%x\n", lpm_ppm_info->hw_version);
+}
+
+/**
+ * Prints the USB-C Platform Policy Manager error status.
+ *
+ * @param
+ * get_error_status The structure containing the error status.
+ */
+void print_get_error_status(struct libtypec_get_error_status *error_status)
+{
+	printf("UCSI MESSAGE_IN:\n");
+	printf("==================\n");
+	for (int i = 0; i < sizeof(*error_status); i++) {
+		printf("%02x ", ((unsigned char*)error_status)[i]);
+		if ((i + 1) % 8 == 0) {
+			printf("\n");
+		}
+	}
+
+	printf("\n\nGET_ERROR_STATUS :\n");
+	printf("-------------------------\n");
+	printf("ErrorInformation:\n");
+	printf("  UnrecognizedCmd: %d\n", error_status->error_info.unrecognized_command);
+	printf("  NonExistentConnectorNum: %d\n", error_status->error_info.nonexistent_connector_number);
+	printf("  InvalidCmdSpecificParam: %d\n", error_status->error_info.invalid_cmd_specific_params);
+	printf("  IncomptiableConnectorPartner: %d\n", error_status->error_info.incompatible_connector_partner);
+	printf("  CCcommunicationError: %d\n", error_status->error_info.cc_comm_error);
+	printf("  CmdUnsucessDeadBattery: %d\n", error_status->error_info.cmd_unsuccessful_dead_battery);
+	printf("  ContractNegotiationFailure: %d\n", error_status->error_info.contract_negotiation_failure);
+	printf("  OverCurrent: %d\n", error_status->error_info.overcurrent);
+	printf("  Undefined: %d\n", error_status->error_info.undefined);
+	printf("  PorPartnerRejectSwap: %d\n", error_status->error_info.port_partner_reject_swap);
+	printf("  HardReset: %d\n", error_status->error_info.hard_reset);
+	printf("  PpmPolicyConflict: %d\n", error_status->error_info.ppm_policy_conflict);
+	printf("  SwapRejected: %d\n", error_status->error_info.swap_rejected);
+	printf("  ReverseCurretnProtection: %d\n", error_status->error_info.reverse_current_protection);
+	printf("  SetSinkPathRejected: %d\n", error_status->error_info.set_sink_path_rejected);
+	printf("  Reserved: %d\n", error_status->error_info.reserved);
+	printf("VendorDefined: 0x%x\n", error_status->vendor_defined);
+}
+/**
+ * Prints the USB-C Platform Policy Manager Current alt mode configuration and status.
+ *
+ * @param
+ * get_cam_ds The structure containing the alt mode configuration and status.
+ */
+void print_get_cam_cs(struct libtypec_get_cam_cs *cam_cs)
+{
+	printf("UCSI MESSAGE_IN:\n");
+	printf("==================\n");
+	for (int i = 0; i < sizeof(*cam_cs); i++) {
+		printf("%02x ", ((unsigned char*)cam_cs)[i]);
+		if ((i + 1) % 8 == 0) {
+			printf("\n");
+		}
+	}
+
+	printf("\n\nGET_CAM_CS :");
+	printf("-------------------------\n");
+	printf("CurrentAlternateMode: 0x%x\n", cam_cs->cam);
+	printf("Status: 0x%x\n", cam_cs->sts);
+	printf("NumberOfVDOs: 0x%x\n", cam_cs->num_vdo);
+	printf("VDO: 0x%x\n", cam_cs->vdo);
+};
 
 char *session_info[LIBTYPEC_SESSION_MAX_INDEX];
 
@@ -363,6 +454,12 @@ void ucsicontrol_print(const char *ucsictrl)
     printf("             <src_snk> <type>           Get PDOS\n");
     printf("  --set_uor <conn_num> <DFP/UFP/Accept> Set USB(Data) Operation Role\n");
     printf("  --set_pdr <conn_num> <SRC/SNK/Accept> Set Power Direction Role\n");
+	printf("  --get_lpm_ppm_info <conn_num>         Get lpm and ppm info\n");
+	printf("  --get_error_sts <conn_num>            Get Error Status\n");
+	printf("  --set_ccom <conn_num> <Rd/Rp/DRP>		Set CC Operation Mode\n");
+	printf("  --set_new_cam <conn_num> <Entry/Exit>\n");
+	printf("				<NewCAM> <AMSpec>\n		Set New Current Alternate Mode\n");
+	printf("  --get_cam_cs <conn_num> <cam>         Get Current Alt mode Configuration and Status\n");
 }
 int main(int argc, char *argv[])
 {
@@ -382,6 +479,11 @@ int main(int argc, char *argv[])
         {"get_pdos", required_argument, NULL, 'd'},
         {"set_uor", required_argument, NULL, 'o'},
         {"set_pdr", required_argument, NULL, 'e'},
+		{"get_lpm_ppm_info", required_argument, NULL, 'l'},
+		{"get_error_status", required_argument, NULL, 'm'},
+		{"set_ccom", required_argument, NULL, 'q'},
+		{"set_new_cam", required_argument, NULL, 'w'},
+		{"get_cam_cs", required_argument, NULL, 'x'},
     	{NULL, 0, NULL, 0} // End of options marker
 	};
 
@@ -393,7 +495,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-	while ((c = getopt_long(argc, argv, "htgcspradoe", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, "htgcspradoelmqwx", long_options, &option_index)) != -1) {
         switch (c) {
             case 'h':
                 ucsicontrol_print(argv[0]);
@@ -522,7 +624,7 @@ int main(int argc, char *argv[])
                     uor = 4;
                 else    
                     printf("Invalid UOR type: %s\n", uor_type);
-                ret = libtypec_set_uor_ops(conn_num, uor);
+                ret = libtypec_set_uor(conn_num, uor);
 				if (ret < 0)
 					printf("connector%d set data role operation %s failed\n", conn_num, uor_type);
 				else
@@ -544,12 +646,87 @@ int main(int argc, char *argv[])
                     printf("Invalid PDR type: %s\n", pdr_type);
                     return -1;
                 }
-                ret = libtypec_set_pdr_ops(conn_num, pdr);
+                ret = libtypec_set_pdr(conn_num, pdr);
 				if (ret < 0)
 					printf("connector%d power role swap operation %s failed", conn_num, pdr_type);
 				else
 					printf("connector%d power role swap operation  %s\n", conn_num, pdr_type);
                 return 0;
+            case 'l':
+				conn_num = atoi(optarg);
+                if (conn_num < 0) {
+                    printf("Invalid connector number: %s\n", optarg);
+                    return -1;
+                }
+                ret = libtypec_get_lpm_ppm_info(conn_num, &lpm_ppm_info);
+                if (ret < 0) {
+                    printf("Failed in get_lpm_ppm_info for connector %d\n", conn_num);
+                    return -1;
+                }
+				print_get_lpm_ppm_info(&lpm_ppm_info);
+				return 0;
+           case 'm':
+				conn_num = atoi(optarg);
+                if (conn_num < 0) {
+                    printf("Invalid connector number: %s\n", optarg);
+                    return -1;
+                }
+                ret = libtypec_get_error_status(conn_num, &error_status);
+                if (ret < 0) {
+                    printf("Failed in get_error_status for connector %d\n", conn_num);
+                    return -1;
+                }
+				print_get_error_status(&error_status);
+				return 0;
+           case 'q':
+                conn_num = atoi(optarg);
+                char ccom_type[10];
+                int ccom;
+                strcpy(ccom_type, argv[optind]);
+                if(strcmp(ccom_type, "Rd") == 0)
+                    ccom = 1;
+                else if(strcmp(ccom_type, "Rp") == 0)
+                    ccom = 2;
+                else if(strcmp(ccom_type, "DRP") == 0)
+                    ccom = 4;
+                else    
+					ccom = 8;
+                ret = libtypec_set_ccom(conn_num, ccom);
+				if (ret < 0)
+					printf("connector%d set cc operation mode %s failed\n", conn_num, ccom_type);
+				else
+					printf("connector%d set cc operation mode %s\n", conn_num, ccom_type);
+                return 0;
+			case 'w':
+				int entry_exit, new_cam, am_spec;
+                conn_num = atoi(optarg);
+				entry_exit = atoi(argv[3]);
+				new_cam = atoi(argv[4]);
+				am_spec = atoi(argv[5]);
+				printf("entry_exit : %d\n", entry_exit);
+				printf("new_cam : %d\n", new_cam);
+				printf("am_spec : %d\n", am_spec);
+                ret = libtypec_set_new_cam(conn_num, entry_exit, new_cam, am_spec);
+				if (ret < 0)
+					printf("connector%d set new current alternate mode  %d failed\n", conn_num, new_cam);
+				else
+					printf("connector%d set new current alternate mode %d\n", conn_num, new_cam);
+                return 0;
+ 			case 'x':
+                int cam;
+                conn_num = atoi(optarg);
+                cam = atoi(argv[optind]);
+                if(conn_num < 0)    {
+                    printf("Invalid connector number: %s\n", optarg);
+                    return -1;
+                }
+				ret = libtypec_get_cam_cs(conn_num, cam, &cam_cs);
+				if (ret < 0)	{
+					printf("Failed in get_cam_cs for connector %d\n", conn_num);
+				}
+				print_get_cam_cs(&cam_cs);
+ 				return 0;
+
             default:
                 ucsicontrol_print(argv[0]);
                 return 0;
@@ -561,4 +738,3 @@ int main(int argc, char *argv[])
 
    return 0;
 }
-

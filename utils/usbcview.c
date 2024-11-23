@@ -242,7 +242,7 @@ void build_capabilities_cable(int i)
     int ret, opt, num_modes, num_pdos;
 
      // Resetting port properties
-    cable_prop.cable_type = CABLE_TYPE_UNKNOWN;
+    cable_prop.cable_type = CABLE_TYPE_PASSIVE;
     cable_prop.plug_end_type = PLUG_TYPE_OTH;
    // Cable Properties
     

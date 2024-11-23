@@ -224,7 +224,7 @@ int libtypec_connector_reset(int conn_num, int rst_type)
  * \param  uor data operation role
  * \returns 0 on success
  */
-int libtypec_set_uor_ops(unsigned char conn_num, unsigned char uor)
+int libtypec_set_uor(unsigned char conn_num, unsigned char uor)
 {
     if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->set_uor_ops)
         return -EIO;
@@ -239,13 +239,28 @@ int libtypec_set_uor_ops(unsigned char conn_num, unsigned char uor)
  *
  * \returns 0 on success
  */
-int libtypec_set_pdr_ops(unsigned char conn_num, unsigned char pdr)
+int libtypec_set_pdr(unsigned char conn_num, unsigned char pdr)
 {
     if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->set_pdr_ops)
         return -EIO;
 
     return cur_libtypec_os_backend->set_pdr_ops(conn_num, pdr);
 }
+/**
+ * This function shall be used to set the CC operation mode
+ *
+ * \param  conn_num Data structure to hold platform capability
+ *
+ * \returns 0 on success
+ */
+int libtypec_set_ccom(unsigned char conn_num, unsigned char ccom)
+{
+    if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->set_ccom_ops)
+        return -EIO;
+
+    return cur_libtypec_os_backend->set_ccom_ops(conn_num, ccom);
+}
+
 
 /**
  * This function shall be used to get the platform policy capabilities
@@ -391,6 +406,70 @@ int libtypec_get_pdos (int conn_num, int partner, int offset, int *num_pdo, int 
     return cur_libtypec_os_backend->get_pdos_ops(conn_num,  partner, offset,  num_pdo,  src_snk, type, pdo_data);
 
 }
+/**
+ * This function shall be used to error status info in the system
+ *
+ * \param  conn_num Indicates which connector's status needs to be retrieved
+ *
+ * \returns 0 on success
+ */
+int libtypec_get_error_status(unsigned char conn_num, struct libtypec_get_error_status *error_status)
+{
+
+    if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->get_error_status_ops)
+        return -EIO;
+
+    return cur_libtypec_os_backend->get_error_status_ops(conn_num, error_status);
+
+}
+/**
+ * This function shall be used to set new alternate mode in the system
+ *
+ * \param  conn_num Indicates which connector's status needs to be retrieved
+ *
+ * \returns 0 on success
+ */
+int libtypec_set_new_cam(unsigned char conn_num, unsigned char entry_exit, unsigned char new_cam, unsigned int am_spec)
+{
+
+    if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->set_new_cam_ops)
+        return -EIO;
+
+    return cur_libtypec_os_backend->set_new_cam_ops(conn_num, entry_exit, new_cam, am_spec);
+
+}
+/**
+ * This function shall be used to current alt mode configuration status
+ *
+ * \param  conn_num Indicates which connector's status needs to be retrieved
+ *
+ * \returns 0 on success
+ */
+int libtypec_get_cam_cs(unsigned char conn_num, unsigned char cam, struct libtypec_get_cam_cs *cam_cs)
+{
+
+    if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->get_cam_cs_ops)
+        return -EIO;
+
+    return cur_libtypec_os_backend->get_cam_cs_ops(conn_num, cam, cam_cs);
+}
+/**
+ * This function shall be used to retrive number of retrive the llpm ppm info in the system
+ *
+ * \param  conn_num Indicates which connector's status needs to be retrieved
+ *
+ * \returns 0 on success
+ */
+int libtypec_get_lpm_ppm_info(unsigned char conn_num, struct libtypec_get_lpm_ppm_info *lpm_ppm_info)
+{
+
+    if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->get_lpm_ppm_info_ops)
+        return -EIO;
+
+    return cur_libtypec_os_backend->get_lpm_ppm_info_ops(conn_num, lpm_ppm_info);
+
+}
+
 /**
  * This function shall be used to retrive number of billboard interfaces in the system
  *
