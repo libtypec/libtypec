@@ -39,7 +39,7 @@ endif()
 set_target_properties(libtypec PROPERTIES
 	OUTPUT_NAME "typec"
 	VERSION ${PROJECT_VERSION}
-	SOVERSION ${PROJECT_VERSION_MINOR}
+	SOVERSION "0"
 	PUBLIC_HEADER "libtypec.h;${CMAKE_CURRENT_BINARY_DIR}/libtypec_config.h")
 
 add_subdirectory(utils)
