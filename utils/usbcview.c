@@ -3,6 +3,8 @@
 #include "lstypec.h"
 #include "names.h"
 
+void show_error_dialog(const gchar *message);
+
 GtkTextBuffer *txt_buffer;
 // Function to create the tree store
 GtkTreeStore *create_tree_store() {
