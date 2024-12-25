@@ -30,6 +30,7 @@ include(CPack)
 add_library(libtypec SHARED libtypec.c libtypec_sysfs_ops.c libtypec_dbgfs_ops.c)
 
 target_include_directories(libtypec PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+target_link_libraries(libtypec PUBLIC udev)
 
 option(LIBTYPEC_STRICT_CFLAGS "Compile for strict warnings" ON)
 if(LIBTYPEC_STRICT_CFLAGS)
