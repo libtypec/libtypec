@@ -474,6 +474,155 @@ static int libtypec_dbgfs_set_pdr_ops(unsigned char conn_num, unsigned char pdr)
 	}
     return ret;
 }
+static int libtypec_dbgfs_set_ccom_ops(unsigned char conn_num, unsigned char ccom)
+{
+	int ret=-1;
+	unsigned char buf[64];
+	union set_ccom_cmd
+	{
+		struct {
+			unsigned int cmd : 8;
+			unsigned int data_leng : 8;
+			unsigned int con_num : 7;
+			unsigned int ccom_type : 3;
+		};
+		unsigned int ccom_cmd;
+	}setccomcmd;
+
+	if(fp_command > 0)
+	{
+		setccomcmd.cmd = 0x08;
+		setccomcmd.data_leng = 0x00;
+		setccomcmd.con_num = conn_num + 1;
+		setccomcmd.ccom_type = ccom ;
+		snprintf(buf, sizeof(buf), "0x%x", setccomcmd.ccom_cmd);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+		}
+	}
+    return ret;
+}
+
+static int libtypec_dbgfs_get_lpm_info_ops(unsigned char conn_num, struct libtypec_get_lpm_ppm_info *lpm_ppm_info)
+{
+	int ret=-1;
+	unsigned char buf[64];
+
+	if(fp_command > 0)
+	{
+		snprintf(buf, sizeof(buf), "0x%x", (conn_num + 1) << 16 | 0x22);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+			// Copy the entire buf into cap_data
+			memcpy(lpm_ppm_info, buf, ret);
+		}
+	}
+    return ret;
+}
+static int libtypec_dbgfs_get_error_status_ops(unsigned char conn_num, struct libtypec_get_error_status *error_status)
+{
+	int ret=-1;
+	unsigned char buf[64];
+
+	if(fp_command > 0)
+	{
+		snprintf(buf, sizeof(buf), "0x%x", (conn_num + 1) << 16 | 0x13);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+			// Copy the entire buf into cap_data
+			memcpy(error_status, buf, ret);
+		}
+	}
+    return ret;
+}
+static int libtypec_dbgfs_set_new_cam_ops(unsigned char conn_num, unsigned char entry_exit, unsigned char new_cam, unsigned int am_spec)
+{
+	int ret=-1;
+	unsigned char buf[64];
+	union set_new_cam_cmd
+	{
+		struct {
+			unsigned int cmd : 8;
+			unsigned int data_leng : 8;
+			unsigned int con_num : 7;
+			unsigned int entry_exit : 1;
+			unsigned int new_cam : 8;
+			unsigned int am_spec;
+		};
+		unsigned long int newcam_cmd;
+	}setnewcamcmd;
+
+	if(fp_command > 0)
+	{
+		setnewcamcmd.cmd = 0x0F;
+		setnewcamcmd.data_leng = 0x00;
+		setnewcamcmd.con_num = conn_num + 1;
+		setnewcamcmd.entry_exit = entry_exit;
+		setnewcamcmd.new_cam = new_cam;
+		setnewcamcmd.am_spec = am_spec;
+		snprintf(buf, sizeof(buf), "0x%lx", setnewcamcmd.newcam_cmd);
+		printf("===> %s\n", buf);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+		}
+	}
+    return ret;
+}
+
+static int libtypec_dbgfs_get_cam_cs_ops(unsigned char conn_num, unsigned char cam, struct libtypec_get_cam_cs *cam_cs)
+{
+	int ret=-1;
+	unsigned char buf[64];
+	union get_cam_cs_cmd
+	{
+		struct {
+			unsigned int cmd : 8;
+			unsigned int data_leng : 8;
+			unsigned int conn_num : 7;
+			unsigned int reserved : 1;
+			unsigned int cam : 8;
+		};
+		unsigned int camcs_cmd;
+	}getcamcscmd;
+
+
+	if(fp_command > 0)
+	{
+		getcamcscmd.cmd = 0x18;
+		getcamcscmd.data_leng  = 0x0;
+		getcamcscmd.conn_num = conn_num;
+		getcamcscmd.cam = cam;
+
+		snprintf(buf, sizeof(buf), "0x%x", getcamcscmd.camcs_cmd);
+		ret = write(fp_command,buf,sizeof(buf));
+		if(ret)
+		{
+			ret = get_ucsi_response(buf);
+			if(ret < 16)
+				ret = -1;
+			// Copy the entire buf into cap_data
+			memcpy(cam_cs, buf, ret);
+		}
+	}
+    return ret;
+}
+
 const struct libtypec_os_backend libtypec_lnx_dbgfs_backend = {
 	.init = libtypec_dbgfs_init,
 	.exit = libtypec_dbgfs_exit,
@@ -489,7 +638,11 @@ const struct libtypec_os_backend libtypec_lnx_dbgfs_backend = {
 	.get_pd_message_ops = NULL,
 	.get_bb_status = NULL,
 	.get_bb_data = NULL,
-	.get_lpm_ppm_info_ops = NULL,
 	.set_uor_ops = libtypec_dbgfs_set_uor_ops,
 	.set_pdr_ops = libtypec_dbgfs_set_pdr_ops,
+	.set_ccom_ops = libtypec_dbgfs_set_ccom_ops,
+	.get_lpm_ppm_info_ops = libtypec_dbgfs_get_lpm_info_ops,
+	.get_error_status_ops = libtypec_dbgfs_get_error_status_ops,
+	.set_new_cam_ops = libtypec_dbgfs_set_new_cam_ops,
+	.get_cam_cs_ops = libtypec_dbgfs_get_cam_cs_ops,
 };

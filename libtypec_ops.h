@@ -71,7 +71,7 @@ struct libtypec_os_backend
 
     int (*get_connector_status_ops)(int conn_num, struct libtypec_connector_status *conn_sts);
 
-    int (*get_pd_message_ops)(int recipient, int conn_num, int num_bytes, int resp_type, char *pd_msg_resp);
+	int (*get_pd_message_ops)(int recipient, int conn_num, int num_bytes, int resp_type, char *pd_msg_resp);
 
     int (*get_bb_status)(unsigned int *num_bb_instance);
 
@@ -79,11 +79,19 @@ struct libtypec_os_backend
 
     void (*monitor_events)(void);
 
-	int (*get_lpm_ppm_info_ops)(void);
+	int (*get_lpm_ppm_info_ops)(unsigned char conn_num, struct libtypec_get_lpm_ppm_info *lpm_ppm_info);
+
+	int (*get_error_status_ops)(unsigned char conn_num, struct libtypec_get_error_status *error_status);
 
     int (*set_uor_ops)(unsigned char conn_num, unsigned char uor);
 
     int (*set_pdr_ops)(unsigned char conn_num, unsigned char pdr);
+
+    int (*set_ccom_ops)(unsigned char conn_num, unsigned char ccom);
+
+    int (*set_new_cam_ops)(unsigned char conn_num, unsigned char entry_exit, unsigned char new_cam, unsigned int am_spec);
+
+    int (*get_cam_cs_ops)(unsigned char conn_num, unsigned char cam, struct libtypec_get_cam_cs *cam_cs);
 };
 
 #endif /*LIBTYPEC_OPS_H*/
