@@ -3,6 +3,8 @@
 #include "lstypec.h"
 #include "names.h"
 
+void show_error_dialog(const gchar *message);
+
 GtkTextBuffer *txt_buffer;
 // Function to create the tree store
 GtkTreeStore *create_tree_store() {
@@ -19,7 +21,7 @@ GtkTreeStore *create_tree_store() {
   if (ret < 0)
   {
     show_error_dialog("Failed in Initializing libtypec");
-    return -1;
+    exit(1);
   }
 
   // Level 1
@@ -33,7 +35,7 @@ GtkTreeStore *create_tree_store() {
   if (ret < 0)
   {
     show_error_dialog("Failed in Get Capability");
-    return -1;
+    exit(1);
   }
 
   for (int i = 0; i < get_cap_data.bNumConnectors; i++) 
