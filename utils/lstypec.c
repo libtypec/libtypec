@@ -73,8 +73,6 @@ void print_usage() {
 }
 
 void parse_args(int argc, char *argv[]) {
-    int opt;
-
     // Initialize the CmdArgs structure with default values
     lstypec_args.verbose = 0;
     lstypec_args.help = 0;
@@ -414,9 +412,6 @@ void print_alternate_mode_data(int recipient, uint32_t id_header, int num_modes,
 
 void print_identity_data(int recipient, union libtypec_discovered_identity id, struct libtypec_connector_cap_data conn_data)
 {
-  union id_header id_hdr_val;
-  id_hdr_val.id_hdr = id.disc_id.id_header;
-
   if (recipient == AM_SOP)
   {
     printf("  Partner Identity :\n");
@@ -762,7 +757,7 @@ void lstypec_print(char *val, int type)
 }
 void print_capabilities_partner(int i)
 {
-    int ret, opt, num_modes, num_pdos;
+    int ret, num_modes, num_pdos;
 
    // Partner
     num_modes = libtypec_get_alternate_modes(AM_SOP, i, am_data);
@@ -791,7 +786,7 @@ void print_capabilities_partner(int i)
 }
 void print_capabilities_cable(int i)
 {
-    int ret, opt, num_modes, num_pdos;
+    int ret, num_modes;
 
      // Resetting port properties
     cable_prop.cable_type = CABLE_TYPE_PASSIVE;
@@ -815,7 +810,7 @@ void print_capabilities_cable(int i)
 }
 void print_capabilities_port(int i)
 {
-    int ret, opt, num_modes, num_pdos;
+    int ret, num_modes, num_pdos;
 
     // Connector Capabilities
 	printf("\nConnector %d Capability/Status\n", i);
