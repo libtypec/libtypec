@@ -244,21 +244,21 @@ void print_vdo(uint32_t vdo, int num_fields, const struct vdo_field vdo_fields[]
     if (!vdo_fields[i].print)
       continue;
 
-      uint32_t field = (vdo >> vdo_fields[i].index) & vdo_fields[i].mask;
-      printf("      %s: %*d", vdo_fields[i].name, FIELD_WIDTH(MAX_FIELD_LENGTH - ((int) strlen(vdo_fields[i].name))), ((vdo >> vdo_fields[i].index) & vdo_fields[i].mask));
-      if (vdo_field_desc[i][0] != NULL) {
-        // decode field
-        printf(" (%s)\n", vdo_field_desc[i][field]);
-      } else if (strcmp(vdo_fields[i].name, "USB Vendor ID")  == 0) {
-        // decode vendor id
-         char vendor_str[128];
-         uint16_t svid = ((vdo >> vdo_fields[i].index) & vdo_fields[i].mask);
-         get_vendor_string(vendor_str, sizeof(vendor_str), svid);
-        printf(" (%s)\n", (vendor_str[0] == '\0' ? "unknown" : vendor_str));
-      } else {
-        // No decoding
-        printf("\n");
-      }
+    uint32_t field = (vdo >> vdo_fields[i].index) & vdo_fields[i].mask;
+    printf("      %s: %*d", vdo_fields[i].name, FIELD_WIDTH(MAX_FIELD_LENGTH - ((int) strlen(vdo_fields[i].name))), ((vdo >> vdo_fields[i].index) & vdo_fields[i].mask));
+    if (vdo_field_desc[i][0] != NULL) {
+      // decode field
+      printf(" (%s)\n", vdo_field_desc[i][field]);
+    } else if (strcmp(vdo_fields[i].name, "USB Vendor ID")  == 0) {
+      // decode vendor id
+       char vendor_str[128];
+       uint16_t svid = ((vdo >> vdo_fields[i].index) & vdo_fields[i].mask);
+       get_vendor_string(vendor_str, sizeof(vendor_str), svid);
+      printf(" (%s)\n", (vendor_str[0] == '\0' ? "unknown" : vendor_str));
+    } else {
+      // No decoding
+      printf("\n");
+    }
   }
 }
 
