@@ -5,8 +5,6 @@ inc_dir = include_directories('.')
 # Include to find library includes
 inc_dir = include_directories('..')
 
-cc = meson.get_compiler('c')
-
 udev_dep = meson.get_compiler('c').find_library('udev')
 gtk3_dep = dependency('gtk+-3.0')
 

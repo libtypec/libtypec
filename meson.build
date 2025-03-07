@@ -4,6 +4,8 @@ project('libtypec','c',
         default_options : ['warning_level=0']
         )
 
+cc = meson.get_compiler('c')
+
 conf_data = configuration_data()
 split = meson.project_version().split('.')
 conf_data.set('libtypec_VERSION_MAJOR', split[0])
