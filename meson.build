@@ -32,3 +32,7 @@ install_headers(
 )
 
 pkg.generate(libtypec, filebase : 'libtypec')
+
+if get_option('utils')
+    subdir('utils')
+endif
