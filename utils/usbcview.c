@@ -11,7 +11,7 @@ GtkTreeStore *create_tree_store() {
   int ret;
   GtkTreeStore *store = gtk_tree_store_new(1, G_TYPE_STRING);
 
-  GtkTreeIter parent, child, grandchild;
+  GtkTreeIter parent, child;
 
   names_init();
 
@@ -232,7 +232,7 @@ void build_cable_prop(struct libtypec_cable_property cable_prop, int conn_num)
 
 void build_capabilities_partner(int i)
 {
-    int ret, opt, num_modes, num_pdos;
+    int num_modes;
 
    // Partner
     num_modes = libtypec_get_alternate_modes(AM_SOP, i, am_data);
@@ -241,7 +241,7 @@ void build_capabilities_partner(int i)
 }
 void build_capabilities_cable(int i)
 {
-    int ret, opt, num_modes, num_pdos;
+    int ret, num_modes;
 
      // Resetting port properties
     cable_prop.cable_type = CABLE_TYPE_PASSIVE;
@@ -260,7 +260,7 @@ void build_capabilities_cable(int i)
 
 void build_capabilities_port(int i)
 {
-  int ret, opt, num_modes, num_pdos;
+  int num_modes;
   char val[512];
 
 
@@ -312,9 +312,8 @@ void on_tree_selection_changed(GtkTreeSelection *selection, gpointer data) {
   GtkTreeIter iter;
   GtkTreeModel *model;
   gchar *text;
-  char string_data[1024];
-	GtkTextIter begin;
-	GtkTextIter end;
+  GtkTextIter begin;
+  GtkTextIter end;
   int num;
 
   gtk_text_buffer_get_start_iter(txt_buffer,&begin);
@@ -323,8 +322,6 @@ void on_tree_selection_changed(GtkTreeSelection *selection, gpointer data) {
 
   if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
     gtk_tree_model_get(model, &iter, 0, &text, -1);
-
-    GtkTextBuffer *buffer = (GtkTextBuffer *)data;
 
     if (strstr(text, "Port") != NULL) {
       char *p = strchr(text,' ');
@@ -357,8 +354,6 @@ void show_error_dialog(const gchar *message) {
 }
 
 int main(int argc, char *argv[]) {
-  int ret;
-
   gtk_init(&argc, &argv);
 
 
