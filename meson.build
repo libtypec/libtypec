@@ -1,8 +1,8 @@
 project('libtypec','c',
-license: 'MIT',
-version: '0.6.0',
-default_options : [
-	'warning_level=0'])
+        version: '0.6.0',
+        license: 'MIT',
+        default_options : ['warning_level=0']
+        )
 
 conf_data = configuration_data()
 split = meson.project_version().split('.')
