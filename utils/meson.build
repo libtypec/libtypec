@@ -1,7 +1,3 @@
-configure_file(input : 'libtypec_utils_config.h.in', output : 'libtypec_utils_config.h', configuration : conf_data)
-
-# Include current build dir for the above generated file
-inc_dir = include_directories('.')
 # Include to find library includes
 inc_dir = include_directories('..')
 

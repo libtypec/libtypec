@@ -31,7 +31,7 @@
 #include "../libtypec.h"
 #include "lstypec.h"
 #include "names.h"
-#include "libtypec_utils_config.h"
+#include "../libtypec_config.h"
 
 struct altmode_data am_data[64];
 char *session_info[LIBTYPEC_SESSION_MAX_INDEX];
@@ -271,7 +271,7 @@ void print_vdo(uint32_t vdo, int num_fields, const struct vdo_field vdo_fields[]
  */
 void print_session_info()
 {
-  printf("lstypec %d.%d.%d Session Info\n", LSTYPEC_MAJOR_VERSION, LSTYPEC_MINOR_VERSION, LSTYPEC_PATCH_VERSION);
+  printf("lstypec %d.%d.%d Session Info\n", LIBTYPEC_MAJOR_VERSION, LIBTYPEC_MINOR_VERSION, LIBTYPEC_PATCH_VERSION);
   printf("  Using %s\n", session_info[LIBTYPEC_VERSION_INDEX]);
   printf("  %s with Kernel %s\n", session_info[LIBTYPEC_OS_INDEX], session_info[LIBTYPEC_KERNEL_INDEX]);
   printf("  libtypec using %s\n", session_info[LIBTYPEC_OPS_INDEX]);
