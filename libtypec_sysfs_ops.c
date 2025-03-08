@@ -308,7 +308,7 @@ static int get_cable_mode_support(char *path)
 }
 static unsigned int get_variable_supply_pdo(char *path, int src_snk)
 {
-	char path_str[512], port_content[1024];
+	char port_content[1024];
 	union libtypec_variable_supply_src var_src;
 	unsigned int tmp;
 
@@ -339,7 +339,7 @@ static unsigned int get_variable_supply_pdo(char *path, int src_snk)
 }
 static unsigned int get_battery_supply_pdo(char *path, int src_snk)
 {
-	char path_str[512], port_content[512 + 512];
+	char port_content[512 + 512];
 	union libtypec_battery_supply_src bat_src;
 	unsigned int tmp;
 
@@ -372,7 +372,7 @@ static unsigned int get_battery_supply_pdo(char *path, int src_snk)
 }
 static unsigned int get_programmable_supply_pdo(char *path, int src_snk)
 {
-	char path_str[512], port_content[512 + 512];
+	char port_content[512 + 512];
 	union libtypec_pps_src pps_src={0};
 	unsigned int tmp;
 
@@ -401,7 +401,7 @@ static unsigned int get_programmable_supply_pdo(char *path, int src_snk)
 }
 static unsigned int get_fixed_supply_pdo(char *path, int src_snk)
 {
-	char path_str[512], port_content[512 + 512];
+	char port_content[512 + 512];
 	union libtypec_fixed_supply_src fxd_src;
 	union libtypec_fixed_supply_snk fxd_snk;
 	
@@ -641,7 +641,6 @@ static int libtypec_sysfs_get_capability_ops(struct libtypec_capability_data *ca
 static int libtypec_sysfs_get_conn_capability_ops(int conn_num, struct libtypec_connector_cap_data *conn_cap_data)
 {
 	struct stat sb;
-	struct dirent *port_entry;
 	char path_str[512], port_content[512 + 64];
 
 	snprintf(path_str, sizeof(path_str), SYSFS_TYPEC_PATH "/port%d", conn_num);
@@ -788,7 +787,6 @@ static int libtypec_sysfs_get_alternate_modes(int recipient, int conn_num, struc
 static int libtypec_sysfs_get_cable_properties_ops(int conn_num, struct libtypec_cable_property *cbl_prop_data)
 {
 	struct stat sb;
-	struct dirent *port_entry;
 	char path_str[512], port_content[512 + 64];
 
 	snprintf(path_str, sizeof(path_str), SYSFS_TYPEC_PATH "/port%d-cable", conn_num);
@@ -819,7 +817,6 @@ static int libtypec_sysfs_get_cable_properties_ops(int conn_num, struct libtypec
 static int libtypec_sysfs_get_connector_status_ops(int conn_num, struct libtypec_connector_status *conn_sts)
 {
 	struct stat sb;
-	struct dirent *port_entry;
 	char path_str[512], port_content[512 + 64];
 	int ret;
 
@@ -993,8 +990,8 @@ static int libtypec_sysfs_get_pdos_ops(int conn_num, int partner, int offset, in
 {
 	int num_pdos_read = 0;
 	char path_str[512], port_content[512 + 256];
-	DIR *typec_path , *port_path;
-	struct dirent *typec_entry, *port_entry;
+	DIR *typec_path;
+	struct dirent *typec_entry;
 
 	snprintf(path_str, sizeof(path_str), SYSFS_TYPEC_PATH "/port%d", conn_num);
 
