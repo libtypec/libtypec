@@ -869,7 +869,7 @@ static int libtypec_sysfs_get_connector_status_ops(int conn_num, struct libtypec
 
 			max_mw = (cur * volt) / (250 * 1000);
 
-			conn_sts->RequestDataObject = ((op_mw << 10)) | (max_mw)&0x3FF;
+			conn_sts->RequestDataObject = ((op_mw << 10)) | ((max_mw)&0x3FF);
 		}
 	}
 	return 0;
