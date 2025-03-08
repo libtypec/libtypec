@@ -1079,7 +1079,8 @@ static int libtypec_sysfs_get_bb_status(unsigned int *num_bb_instance)
 
 static int libtypec_sysfs_get_bb_data(int num_billboards,char* bb_data)
 {
-	int ret = 0, count;
+	int ret = 0;
+	unsigned int count;
 
 	ret =  libtypec_sysfs_get_bb_status(&count);
 
