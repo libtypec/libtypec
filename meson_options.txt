@@ -1,0 +1,4 @@
+option('utils',
+    type: 'boolean',
+    value: false,
+    description: 'USB Type-C Utilities')
