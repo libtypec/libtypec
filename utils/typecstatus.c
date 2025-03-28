@@ -109,8 +109,9 @@ static unsigned long get_dword_from_path(char *path)
 
 int typec_status_billboard()
 {
-        int ret,index=0;;
-        unsigned char bb_data[512];
+        int ret;
+        unsigned int index=0;
+        char bb_data[512];
 
         ret = libtypec_get_bb_status(&index);
 
@@ -162,7 +163,7 @@ int typec_status_billboard()
 
                         idx =  idx < bmCONF_STR_ARR_MAX ? idx : bmCONF_STR_ARR_MAX;
 
-                        char *aum = &bb_bos_desc->cap_desc_aum_array_start;
+                        unsigned char *aum = &bb_bos_desc->cap_desc_aum_array_start;
 
                         aum = aum + (x*4);
 
