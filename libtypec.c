@@ -46,7 +46,6 @@ static char ver_buf[64];
 static struct utsname ker_uname;
 static const struct libtypec_os_backend *cur_libtypec_os_backend;
 
-
 /**
  * \mainpage libtypec 0.4.0 API Reference
  *
@@ -143,7 +142,6 @@ char *get_os_name(void)
 int libtypec_init(char **session_info, enum libtypec_backend backend)
 {
     int ret;
-    struct statfs sb;
 
     sprintf(ver_buf, "libtypec %d.%d.%d", LIBTYPEC_MAJOR_VERSION, LIBTYPEC_MINOR_VERSION,LIBTYPEC_PATCH_VERSION);
 
@@ -190,7 +188,6 @@ int libtypec_init(char **session_info, enum libtypec_backend backend)
  *
  * \returns 0 on success
  */
-
 int libtypec_exit(void)
 {
     if (!cur_libtypec_os_backend || !cur_libtypec_os_backend->exit )
@@ -246,6 +243,7 @@ int libtypec_set_pdr(unsigned char conn_num, unsigned char pdr)
 
     return cur_libtypec_os_backend->set_pdr_ops(conn_num, pdr);
 }
+
 /**
  * This function shall be used to set the CC operation mode
  *
@@ -260,7 +258,6 @@ int libtypec_set_ccom(unsigned char conn_num, unsigned char ccom)
 
     return cur_libtypec_os_backend->set_ccom_ops(conn_num, ccom);
 }
-
 
 /**
  * This function shall be used to get the platform policy capabilities
@@ -312,6 +309,7 @@ int libtypec_get_alternate_modes(int recipient, int conn_num, struct altmode_dat
 
     return cur_libtypec_os_backend->get_alternate_modes(recipient, conn_num, alt_mode_data);
 }
+
 /**
  * This function shall be used to get the Cable Property of a connector
  *
@@ -406,6 +404,7 @@ int libtypec_get_pdos (int conn_num, int partner, int offset, int *num_pdo, int 
     return cur_libtypec_os_backend->get_pdos_ops(conn_num,  partner, offset,  num_pdo,  src_snk, type, pdo_data);
 
 }
+
 /**
  * This function shall be used to error status info in the system
  *
@@ -422,6 +421,7 @@ int libtypec_get_error_status(unsigned char conn_num, struct libtypec_get_error_
     return cur_libtypec_os_backend->get_error_status_ops(conn_num, error_status);
 
 }
+
 /**
  * This function shall be used to set new alternate mode in the system
  *
@@ -438,6 +438,7 @@ int libtypec_set_new_cam(unsigned char conn_num, unsigned char entry_exit, unsig
     return cur_libtypec_os_backend->set_new_cam_ops(conn_num, entry_exit, new_cam, am_spec);
 
 }
+
 /**
  * This function shall be used to current alt mode configuration status
  *
@@ -453,6 +454,7 @@ int libtypec_get_cam_cs(unsigned char conn_num, unsigned char cam, struct libtyp
 
     return cur_libtypec_os_backend->get_cam_cs_ops(conn_num, cam, cam_cs);
 }
+
 /**
  * This function shall be used to retrive number of retrive the llpm ppm info in the system
  *
@@ -507,6 +509,7 @@ int libtypec_get_bb_data(int bb_instance,char* bb_data)
     return cur_libtypec_os_backend->get_bb_data(bb_instance,bb_data);
 
 }
+
 int libtypec_register_typec_notification_callback(enum usb_typec_event event, usb_typec_callback_t cb, void* data)
 {
     if (event >= USBC_EVENT_COUNT) {
@@ -522,7 +525,10 @@ int libtypec_register_typec_notification_callback(enum usb_typec_event event, us
     node->data = data;
     node->next = registered_callbacks[event];
     registered_callbacks[event] = node;
+
+    return 0;
 }
+
 int libtypec_unregister_callback(enum usb_typec_event event, usb_typec_callback_t cb) {
     if (event >= USBC_EVENT_COUNT) {
         fprintf(stderr, "Invalid event\n");
@@ -538,6 +544,8 @@ int libtypec_unregister_callback(enum usb_typec_event event, usb_typec_callback_
             node = &(*node)->next;
         }
     }
+
+    return 0;
 }
 
 void libtypec_monitor_events(void)

@@ -11,7 +11,7 @@ GtkTreeStore *create_tree_store() {
   int ret;
   GtkTreeStore *store = gtk_tree_store_new(1, G_TYPE_STRING);
 
-  GtkTreeIter parent, child, grandchild;
+  GtkTreeIter parent, child;
 
   names_init();
 
@@ -56,29 +56,29 @@ void build_vdo(uint32_t vdo, int num_fields, const struct vdo_field vdo_fields[]
     if (!vdo_fields[i].print)
       continue;
 
-      uint32_t field = (vdo >> vdo_fields[i].index) & vdo_fields[i].mask;
-      sprintf(val,"      %s: %*d", vdo_fields[i].name, FIELD_WIDTH(MAX_FIELD_LENGTH - ((int) strlen(vdo_fields[i].name))), ((vdo >> vdo_fields[i].index) & vdo_fields[i].mask));
+    uint32_t field = (vdo >> vdo_fields[i].index) & vdo_fields[i].mask;
+    sprintf(val,"      %s: %*d", vdo_fields[i].name, FIELD_WIDTH(MAX_FIELD_LENGTH - ((int) strlen(vdo_fields[i].name))), ((vdo >> vdo_fields[i].index) & vdo_fields[i].mask));
+    gtk_text_buffer_insert_at_cursor(txt_buffer, val,strlen(val));
+
+    if (vdo_field_desc[i][0] != NULL) {
+      // decode field
+      sprintf(val," (%s)\n", vdo_field_desc[i][field]);
       gtk_text_buffer_insert_at_cursor(txt_buffer, val,strlen(val));
 
-      if (vdo_field_desc[i][0] != NULL) {
-        // decode field
-        sprintf(val," (%s)\n", vdo_field_desc[i][field]);
-        gtk_text_buffer_insert_at_cursor(txt_buffer, val,strlen(val));
+    } else if (strcmp(vdo_fields[i].name, "USB Vendor ID")  == 0) {
+      // decode vendor id
+       char vendor_str[128];
+       uint16_t svid = ((vdo >> vdo_fields[i].index) & vdo_fields[i].mask);
+       get_vendor_string(vendor_str, sizeof(vendor_str), svid);
+      sprintf(val," (%s)\n", (vendor_str[0] == '\0' ? "unknown" : vendor_str));
+      gtk_text_buffer_insert_at_cursor(txt_buffer, val,strlen(val));
 
-      } else if (strcmp(vdo_fields[i].name, "USB Vendor ID")  == 0) {
-        // decode vendor id
-         char vendor_str[128];
-         uint16_t svid = ((vdo >> vdo_fields[i].index) & vdo_fields[i].mask);
-         get_vendor_string(vendor_str, sizeof(vendor_str), svid);
-        sprintf(val," (%s)\n", (vendor_str[0] == '\0' ? "unknown" : vendor_str));
-        gtk_text_buffer_insert_at_cursor(txt_buffer, val,strlen(val));
+    } else {
+      // No decoding
+      sprintf(val,"\n");
+      gtk_text_buffer_insert_at_cursor(txt_buffer, val,strlen(val));
 
-      } else {
-        // No decoding
-        sprintf(val,"\n");
-        gtk_text_buffer_insert_at_cursor(txt_buffer, val,strlen(val));
-
-      }
+    }
   }
 }
 
@@ -232,7 +232,7 @@ void build_cable_prop(struct libtypec_cable_property cable_prop, int conn_num)
 
 void build_capabilities_partner(int i)
 {
-    int ret, opt, num_modes, num_pdos;
+    int num_modes;
 
    // Partner
     num_modes = libtypec_get_alternate_modes(AM_SOP, i, am_data);
@@ -241,7 +241,7 @@ void build_capabilities_partner(int i)
 }
 void build_capabilities_cable(int i)
 {
-    int ret, opt, num_modes, num_pdos;
+    int ret, num_modes;
 
      // Resetting port properties
     cable_prop.cable_type = CABLE_TYPE_PASSIVE;
@@ -260,7 +260,7 @@ void build_capabilities_cable(int i)
 
 void build_capabilities_port(int i)
 {
-  int ret, opt, num_modes, num_pdos;
+  int num_modes;
   char val[512];
 
 
@@ -312,9 +312,8 @@ void on_tree_selection_changed(GtkTreeSelection *selection, gpointer data) {
   GtkTreeIter iter;
   GtkTreeModel *model;
   gchar *text;
-  char string_data[1024];
-	GtkTextIter begin;
-	GtkTextIter end;
+  GtkTextIter begin;
+  GtkTextIter end;
   int num;
 
   gtk_text_buffer_get_start_iter(txt_buffer,&begin);
@@ -323,8 +322,6 @@ void on_tree_selection_changed(GtkTreeSelection *selection, gpointer data) {
 
   if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
     gtk_tree_model_get(model, &iter, 0, &text, -1);
-
-    GtkTextBuffer *buffer = (GtkTextBuffer *)data;
 
     if (strstr(text, "Port") != NULL) {
       char *p = strchr(text,' ');
@@ -357,8 +354,6 @@ void show_error_dialog(const gchar *message) {
 }
 
 int main(int argc, char *argv[]) {
-  int ret;
-
   gtk_init(&argc, &argv);
 
 

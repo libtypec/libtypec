@@ -285,7 +285,7 @@ static int libtypec_dbgfs_get_alternate_modes(int recipient, int conn_num, struc
 				alt_mode_data[i].svid 	 = buf[1] << 8 | buf[0];
 				alt_mode_data[i].vdo 	 = buf[5] << 24 | buf[4] << 16 | buf[3] << 8 | buf[2];
 
-				if(alt_mode_data[i].svid == 0 | alt_mode_data[i].svid == psvid)
+				if((alt_mode_data[i].svid == 0) | (alt_mode_data[i].svid == psvid))
 					break;
 				psvid = alt_mode_data[i].svid;
 			}
@@ -357,7 +357,7 @@ static int libtypec_dbgfs_get_pdos_ops(int conn_num, int partner, int offset, in
 				if(ret< 16)
 					return -1;
 				pdo_data->pdo[i] = buf[3] << 24 | buf[2] << 16 | buf[1] << 8 | buf[0];
-				if(pdo_data->pdo[i] == 0 | pdo_data->pdo[i] == ppdo)
+				if((pdo_data->pdo[i] == 0) | (pdo_data->pdo[i] == ppdo))
 					break;
 				ppdo = pdo_data->pdo[i];
 			}

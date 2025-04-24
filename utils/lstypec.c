@@ -31,7 +31,7 @@
 #include "../libtypec.h"
 #include "lstypec.h"
 #include "names.h"
-#include "libtypec_utils_config.h"
+#include "../libtypec_config.h"
 
 struct altmode_data am_data[64];
 char *session_info[LIBTYPEC_SESSION_MAX_INDEX];
@@ -73,8 +73,6 @@ void print_usage() {
 }
 
 void parse_args(int argc, char *argv[]) {
-    int opt;
-
     // Initialize the CmdArgs structure with default values
     lstypec_args.verbose = 0;
     lstypec_args.help = 0;
@@ -245,7 +243,6 @@ void print_vdo(uint32_t vdo, int num_fields, const struct vdo_field vdo_fields[]
   for (int i = 0; i < num_fields; i++) {
     if (!vdo_fields[i].print)
       continue;
-
       uint32_t field = (vdo >> vdo_fields[i].index) & vdo_fields[i].mask;
       printf("      %s: %*d", vdo_fields[i].name, FIELD_WIDTH(MAX_FIELD_LENGTH - ((int) strlen(vdo_fields[i].name))), ((vdo >> vdo_fields[i].index) & vdo_fields[i].mask));
       if (vdo_field_desc[i][0] != NULL) {
@@ -258,7 +255,7 @@ void print_vdo(uint32_t vdo, int num_fields, const struct vdo_field vdo_fields[]
          get_vendor_string(vendor_str, sizeof(vendor_str), svid);
         printf(" (%s)\n", (vendor_str[0] == '\0' ? "unknown" : vendor_str));
       } else {
-	int unit_step;
+	        int unit_step;
         char unit_name[4];
         if (sscanf(vdo_fields[i].name, "%*[^0-9]%d%3s units", &unit_step, unit_name) == 2) {
           // decode unit
@@ -278,7 +275,7 @@ void print_vdo(uint32_t vdo, int num_fields, const struct vdo_field vdo_fields[]
  */
 void print_session_info()
 {
-  printf("lstypec %d.%d.%d Session Info\n", LSTYPEC_MAJOR_VERSION, LSTYPEC_MINOR_VERSION, LSTYPEC_PATCH_VERSION);
+  printf("lstypec %d.%d.%d Session Info\n", LIBTYPEC_MAJOR_VERSION, LIBTYPEC_MINOR_VERSION, LIBTYPEC_PATCH_VERSION);
   printf("  Using %s\n", session_info[LIBTYPEC_VERSION_INDEX]);
   printf("  %s with Kernel %s\n", session_info[LIBTYPEC_OS_INDEX], session_info[LIBTYPEC_KERNEL_INDEX]);
   printf("  libtypec using %s\n", session_info[LIBTYPEC_OPS_INDEX]);
@@ -421,9 +418,6 @@ void print_alternate_mode_data(int recipient, uint32_t id_header, int num_modes,
 
 void print_identity_data(int recipient, union libtypec_discovered_identity id, struct libtypec_connector_cap_data conn_data)
 {
-  union id_header id_hdr_val;
-  id_hdr_val.id_hdr = id.disc_id.id_header;
-
   if (recipient == AM_SOP)
   {
     printf("  Partner Identity :\n");
@@ -769,7 +763,7 @@ void lstypec_print(char *val, int type)
 }
 void print_capabilities_partner(int i)
 {
-    int ret, opt, num_modes, num_pdos;
+    int ret, num_modes, num_pdos;
 
    // Partner
     num_modes = libtypec_get_alternate_modes(AM_SOP, i, am_data);
@@ -798,7 +792,7 @@ void print_capabilities_partner(int i)
 }
 void print_capabilities_cable(int i)
 {
-    int ret, opt, num_modes, num_pdos;
+    int ret, num_modes;
 
      // Resetting port properties
     cable_prop.cable_type = CABLE_TYPE_PASSIVE;
@@ -822,7 +816,7 @@ void print_capabilities_cable(int i)
 }
 void print_capabilities_port(int i)
 {
-    int ret, opt, num_modes, num_pdos;
+    int ret, num_modes, num_pdos;
 
     // Connector Capabilities
 	printf("\nConnector %d Capability/Status\n", i);
