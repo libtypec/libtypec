@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(libtypec_utils VERSION 0.6.0)
+project(libtypec_utils VERSION 0.6.1)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
